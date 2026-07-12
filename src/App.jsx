@@ -29,12 +29,14 @@ export default function App() {
   const [selectedClip, setSelectedClip] = useState(null);
   const [isShort, setIsShort] = useState(true);
   const [thumbIndex, setThumbIndex] = useState(0);
+  const [user, setUser] = useState(null);
 
   function restart() {
     setStep("login");
     setSelectedClip(null);
     setIsShort(true);
     setThumbIndex(0);
+    setUser(null);
   }
 
   return (
@@ -60,12 +62,25 @@ export default function App() {
               step === "publish") && (
               <div className="clipflow-topnav">
                 <div className="clipflow-topnav-logo">clipflow.</div>
-                <div className="clipflow-avatar" />
+                {user?.picture ? (
+                  <img
+                    src={user.picture}
+                    alt={user.name}
+                    title={user.name}
+                    className="clipflow-avatar"
+                    style={{ objectFit: "cover" }}
+                  />
+                ) : (
+                  <div className="clipflow-avatar" />
+                )}
               </div>
             )}
 
             {step === "login" && (
-              <LoginStage onContinue={() => setStep("import")} />
+              <LoginStage
+                onContinue={() => setStep("import")}
+                onLogin={setUser}
+              />
             )}
 
             {step === "import" && (

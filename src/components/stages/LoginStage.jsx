@@ -1,6 +1,20 @@
-import GoogleIcon from "../GoogleIcon.jsx";
+import { GoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
 
-export default function LoginStage({ onContinue }) {
+export default function LoginStage({ onContinue, onLogin }) {
+  function handleSuccess(credentialResponse) {
+    // credentialResponse.credential is a signed JWT from Google.
+    // Decoding it client-side gives us the user's name/email/picture.
+    // (Decoding is NOT the same as verifying — see note below.)
+    const decoded = jwtDecode(credentialResponse.credential);
+    onLogin({
+      name: decoded.name,
+      email: decoded.email,
+      picture: decoded.picture,
+    });
+    onContinue();
+  }
+
   return (
     <div>
       <div style={{ textAlign: "center" }}>
@@ -12,9 +26,12 @@ export default function LoginStage({ onContinue }) {
         cuts it, and gets it ready to publish.
       </p>
       <div className="clipflow-card">
-        <button className="clipflow-btn" onClick={onContinue}>
-          <GoogleIcon /> Continue with Google
-        </button>
+        <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+          <GoogleLogin
+            onSuccess={handleSuccess}
+            onError={() => console.log("Google login failed")}
+          />
+        </div>
         <div className="clipflow-divider">or</div>
         <input className="clipflow-field" placeholder="name@studio.com" />
         <input className="clipflow-field" placeholder="Password" type="password" />
