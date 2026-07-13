@@ -2,7 +2,7 @@ import { useRef, useEffect, useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 
-export default function LoginStage({ onContinue, onLogin }) {
+export default function LoginStage({ onContinue, onLogin, theme }) {
   const buttonWrapRef = useRef(null);
   const [buttonWidth, setButtonWidth] = useState(280);
 
@@ -40,7 +40,7 @@ export default function LoginStage({ onContinue, onLogin }) {
           <GoogleLogin
             onSuccess={handleSuccess}
             onError={() => console.log("Google login failed")}
-            theme="filled_black"
+            theme={theme === "dark" ? "outline" : "filled_black"}
             shape="pill"
             size="large"
             text="continue_with"

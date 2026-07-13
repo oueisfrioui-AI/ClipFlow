@@ -82,6 +82,7 @@ export default function App() {
           <LoginStage
             onContinue={() => setStep("import")}
             onLogin={setUser}
+            theme={theme}
           />
         )}
 
