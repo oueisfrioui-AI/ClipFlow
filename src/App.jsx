@@ -28,17 +28,20 @@ export default function App() {
     setTheme((t) => (t === "light" ? "dark" : "light"));
   }
 
-  function restart() {
+  function startOver() {
+    setStep("import");
+    setSelectedClip(null);
+    setIsShort(true);
+    setThumbIndex(0);
+  }
+
+  function logout() {
+    setSidebarOpen(false);
     setStep("login");
     setSelectedClip(null);
     setIsShort(true);
     setThumbIndex(0);
     setUser(null);
-  }
-
-  function logout() {
-    setSidebarOpen(false);
-    restart();
   }
 
   return (
@@ -49,7 +52,7 @@ export default function App() {
         </div>
         <div className="clipflow-appbar-right">
           {step !== "login" && (
-            <button className="clipflow-restart" onClick={restart}>
+            <button className="clipflow-restart" onClick={startOver}>
               Start over
             </button>
           )}
@@ -109,7 +112,7 @@ export default function App() {
         )}
 
         {step === "done" && (
-          <DoneStage isShort={isShort} onRestart={restart} />
+          <DoneStage isShort={isShort} onRestart={startOver} />
         )}
       </div>
 
