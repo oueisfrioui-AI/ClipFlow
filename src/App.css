@@ -20,6 +20,7 @@
   padding:56px 24px 120px;
   min-height:100vh;
 }
+html, body{margin:0;padding:0;}
 .clipflow{transition:background .2s ease, color .2s ease;}
 .clipflow[data-theme="dark"]{
   --bg:#15130F;

@@ -38,6 +38,7 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem("clipflow-theme", theme);
+    document.body.style.background = theme === "dark" ? "#15130F" : "#FBF7F1";
   }, [theme]);
 
   function toggleTheme() {
