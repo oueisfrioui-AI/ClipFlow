@@ -57,7 +57,7 @@ html, body{margin:0;padding:0;}
   border:1px solid var(--line);transition:all .2s ease;
 }
 .clipflow-step-dot.current{color:#FFFFFF;border-color:transparent;background:var(--orange);}
-.clipflow-step-dot.done{background:var(--ink);color:#FFFFFF;border-color:var(--ink);}
+.clipflow-step-dot.done{background:var(--ink);color:var(--bg);border-color:var(--ink);}
 .clipflow-step-label{font-size:12px;font-weight:600;color:var(--ink-faint);white-space:nowrap;}
 .clipflow-step-label.active{color:var(--ink);}
 .clipflow-step-line{flex:1;height:1px;background:var(--line);}
