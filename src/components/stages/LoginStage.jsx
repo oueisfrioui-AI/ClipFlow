@@ -26,18 +26,12 @@ export default function LoginStage({ onContinue, onLogin }) {
         cuts it, and gets it ready to publish.
       </p>
       <div className="clipflow-card">
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+        <div style={{ display: "flex", justifyContent: "center" }}>
           <GoogleLogin
             onSuccess={handleSuccess}
             onError={() => console.log("Google login failed")}
           />
         </div>
-        <div className="clipflow-divider">or</div>
-        <input className="clipflow-field" placeholder="name@studio.com" />
-        <input className="clipflow-field" placeholder="Password" type="password" />
-        <button className="clipflow-btn clipflow-btn-primary" onClick={onContinue}>
-          Sign in
-        </button>
       </div>
     </div>
   );

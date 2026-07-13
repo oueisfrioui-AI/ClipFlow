@@ -1,15 +1,13 @@
 export const STAGES = [
-  { key: "login", label: "Sign in" },
   { key: "import", label: "Import" },
   { key: "review", label: "Review" },
   { key: "publish", label: "Publish" },
 ];
 
 export function stageIndexFor(step) {
-  if (step === "login") return 0;
-  if (step === "import" || step === "processing") return 1;
-  if (step === "review") return 2;
-  return 3; // publish, done
+  if (step === "import" || step === "processing") return 0;
+  if (step === "review") return 1;
+  return 2; // publish, done
 }
 
 export default function Stepper({ step }) {
