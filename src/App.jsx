@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BrowserChrome from "./components/BrowserChrome.jsx";
 import Stepper from "./components/Stepper.jsx";
+import Sidebar from "./components/Sidebar.jsx";
 import LoginStage from "./components/stages/LoginStage.jsx";
 import ImportStage from "./components/stages/ImportStage.jsx";
 import ProcessingStage from "./components/stages/ProcessingStage.jsx";
@@ -30,6 +31,18 @@ export default function App() {
   const [isShort, setIsShort] = useState(true);
   const [thumbIndex, setThumbIndex] = useState(0);
   const [user, setUser] = useState(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem("clipflow-theme") || "light"
+  );
+
+  useEffect(() => {
+    localStorage.setItem("clipflow-theme", theme);
+  }, [theme]);
+
+  function toggleTheme() {
+    setTheme((t) => (t === "light" ? "dark" : "light"));
+  }
 
   function restart() {
     setStep("login");
@@ -39,8 +52,13 @@ export default function App() {
     setUser(null);
   }
 
+  function logout() {
+    setSidebarOpen(false);
+    restart();
+  }
+
   return (
-    <div className="clipflow">
+    <div className="clipflow" data-theme={theme}>
       <div className="clipflow-page">
         <div className="clipflow-masthead">
           <div className="clipflow-wordmark">
@@ -69,9 +87,13 @@ export default function App() {
                     title={user.name}
                     className="clipflow-avatar"
                     style={{ objectFit: "cover" }}
+                    onClick={() => setSidebarOpen(true)}
                   />
                 ) : (
-                  <div className="clipflow-avatar" />
+                  <div
+                    className="clipflow-avatar"
+                    onClick={() => setSidebarOpen(true)}
+                  />
                 )}
               </div>
             )}
@@ -115,6 +137,15 @@ export default function App() {
           </div>
         </div>
       </div>
+
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        user={user}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onLogout={logout}
+      />
     </div>
   );
 }
