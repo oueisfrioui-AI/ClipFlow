@@ -1,7 +1,17 @@
+import { useRef, useEffect, useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { jwtDecode } from "jwt-decode";
 
 export default function LoginStage({ onContinue, onLogin }) {
+  const buttonWrapRef = useRef(null);
+  const [buttonWidth, setButtonWidth] = useState(280);
+
+  useEffect(() => {
+    if (buttonWrapRef.current) {
+      setButtonWidth(Math.round(buttonWrapRef.current.offsetWidth));
+    }
+  }, []);
+
   function handleSuccess(credentialResponse) {
     // credentialResponse.credential is a signed JWT from Google.
     // Decoding it client-side gives us the user's name/email/picture.
@@ -25,13 +35,22 @@ export default function LoginStage({ onContinue, onLogin }) {
         Paste a video and ClipFlow finds the moment people won't scroll past,
         cuts it, and gets it ready to publish.
       </p>
-      <div className="clipflow-card">
-        <div style={{ display: "flex", justifyContent: "center" }}>
+      <div className="clipflow-card clipflow-login-card">
+        <div className="clipflow-google-btn" ref={buttonWrapRef}>
           <GoogleLogin
             onSuccess={handleSuccess}
             onError={() => console.log("Google login failed")}
+            theme="filled_black"
+            shape="pill"
+            size="large"
+            text="continue_with"
+            logo_alignment="left"
+            width={buttonWidth}
           />
         </div>
+        <p className="clipflow-login-fineprint">
+          By continuing, you agree to ClipFlow's Terms and Privacy Policy.
+        </p>
       </div>
     </div>
   );

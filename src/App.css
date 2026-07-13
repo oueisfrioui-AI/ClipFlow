@@ -71,7 +71,9 @@ html, body{margin:0;padding:0;}
 .clipflow-login-eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--orange-dim);color:var(--orange);font-size:13px;font-weight:600;padding:6px 14px;border-radius:20px;margin-bottom:20px;}
 .clipflow-login-headline{font-size:34px;line-height:1.15;font-weight:700;margin:0 0 14px;letter-spacing:-0.01em;text-align:center;}
 .clipflow-login-copy{color:var(--ink-dim);font-size:15px;line-height:1.6;max-width:360px;margin:0 auto 32px;text-align:center;}
-.clipflow-card{background:var(--panel2);border-radius:20px;padding:32px;max-width:360px;margin:0 auto;}
+.clipflow-card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:32px;max-width:360px;margin:0 auto;box-shadow:0 4px 20px rgba(90,60,20,0.05);}
+.clipflow-google-btn{display:flex;justify-content:center;}
+.clipflow-login-fineprint{font-size:11.5px;line-height:1.5;color:var(--ink-faint);margin:18px 0 0;text-align:center;}
 
 .clipflow-btn{
   width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
