@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import BrowserChrome from "./components/BrowserChrome.jsx";
 import Stepper from "./components/Stepper.jsx";
 import Sidebar from "./components/Sidebar.jsx";
 import LoginStage from "./components/stages/LoginStage.jsx";
@@ -8,22 +7,6 @@ import ProcessingStage from "./components/stages/ProcessingStage.jsx";
 import ReviewStage from "./components/stages/ReviewStage.jsx";
 import PublishStage from "./components/stages/PublishStage.jsx";
 import DoneStage from "./components/stages/DoneStage.jsx";
-
-function urlForStep(step) {
-  switch (step) {
-    case "login":
-      return "clipflow.app/login";
-    case "import":
-    case "processing":
-      return "clipflow.app/new";
-    case "review":
-      return "clipflow.app/review/3fK9m2Lp1qs";
-    case "publish":
-      return "clipflow.app/publish/clip_0038";
-    default:
-      return "clipflow.app/publish/clip_0038/done";
-  }
-}
 
 export default function App() {
   const [step, setStep] = useState("login");
@@ -60,83 +43,74 @@ export default function App() {
 
   return (
     <div className="clipflow" data-theme={theme}>
-      <div className="clipflow-page">
-        <div className="clipflow-masthead">
-          <div className="clipflow-wordmark">
-            clipflow<span>.</span>
-          </div>
-          <div className="clipflow-restart" onClick={restart}>
-            Restart demo
-          </div>
+      <div className="clipflow-appbar">
+        <div className="clipflow-wordmark">
+          clipflow<span>.</span>
         </div>
-
-        <Stepper step={step} />
-
-        <div className="clipflow-frame">
-          <BrowserChrome url={urlForStep(step)} />
-          <div className="clipflow-screen">
-            {(step === "import" ||
-              step === "processing" ||
-              step === "review" ||
-              step === "publish") && (
-              <div className="clipflow-topnav">
-                <div className="clipflow-topnav-logo">clipflow.</div>
-                {user?.picture ? (
-                  <img
-                    src={user.picture}
-                    alt={user.name}
-                    title={user.name}
-                    className="clipflow-avatar"
-                    style={{ objectFit: "cover" }}
-                    onClick={() => setSidebarOpen(true)}
-                  />
-                ) : (
-                  <div
-                    className="clipflow-avatar"
-                    onClick={() => setSidebarOpen(true)}
-                  />
-                )}
-              </div>
-            )}
-
-            {step === "login" && (
-              <LoginStage
-                onContinue={() => setStep("import")}
-                onLogin={setUser}
+        <div className="clipflow-appbar-right">
+          {step !== "login" && (
+            <button className="clipflow-restart" onClick={restart}>
+              Start over
+            </button>
+          )}
+          {user &&
+            (user.picture ? (
+              <img
+                src={user.picture}
+                alt={user.name}
+                title={user.name}
+                className="clipflow-avatar"
+                style={{ objectFit: "cover" }}
+                onClick={() => setSidebarOpen(true)}
               />
-            )}
-
-            {step === "import" && (
-              <ImportStage onSubmit={() => setStep("processing")} />
-            )}
-
-            {step === "processing" && (
-              <ProcessingStage onDone={() => setStep("review")} />
-            )}
-
-            {step === "review" && (
-              <ReviewStage
-                selectedClip={selectedClip}
-                onSelectClip={setSelectedClip}
-                onContinue={() => setStep("publish")}
+            ) : (
+              <div
+                className="clipflow-avatar"
+                onClick={() => setSidebarOpen(true)}
               />
-            )}
-
-            {step === "publish" && (
-              <PublishStage
-                isShort={isShort}
-                onToggleShort={() => setIsShort(!isShort)}
-                thumbIndex={thumbIndex}
-                onSelectThumb={setThumbIndex}
-                onPublish={() => setStep("done")}
-              />
-            )}
-
-            {step === "done" && (
-              <DoneStage isShort={isShort} onRestart={restart} />
-            )}
-          </div>
+            ))}
         </div>
+      </div>
+
+      <div className="clipflow-content">
+        {step !== "login" && <Stepper step={step} />}
+
+        {step === "login" && (
+          <LoginStage
+            onContinue={() => setStep("import")}
+            onLogin={setUser}
+          />
+        )}
+
+        {step === "import" && (
+          <ImportStage onSubmit={() => setStep("processing")} />
+        )}
+
+        {step === "processing" && (
+          <ProcessingStage onDone={() => setStep("review")} />
+        )}
+
+        {step === "review" && (
+          <ReviewStage
+            selectedClip={selectedClip}
+            onSelectClip={setSelectedClip}
+            onContinue={() => setStep("publish")}
+          />
+        )}
+
+        {step === "publish" && (
+          <PublishStage
+            isShort={isShort}
+            onToggleShort={() => setIsShort(!isShort)}
+            thumbIndex={thumbIndex}
+            onSelectThumb={setThumbIndex}
+            onPublish={() => setStep("done")}
+          />
+        )}
+
+        {step === "done" && (
+          <DoneStage isShort={isShort} onRestart={restart} />
+        )}
       </div>
 
       <Sidebar

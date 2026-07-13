@@ -17,7 +17,6 @@
   background:var(--bg);
   color:var(--ink);
   font-family:'Plus Jakarta Sans',sans-serif;
-  padding:56px 24px 120px;
   min-height:100vh;
 }
 html, body{margin:0;padding:0;}
@@ -36,17 +35,22 @@ html, body{margin:0;padding:0;}
   --blue-dim:#1C2E42;
 }
 .clipflow *{box-sizing:border-box;}
-.clipflow-page{max-width:880px;margin:0 auto;}
 
-.clipflow-masthead{display:flex;align-items:center;justify-content:space-between;margin-bottom:36px;}
-.clipflow-wordmark{font-size:22px;font-weight:700;letter-spacing:-0.01em;}
+.clipflow-appbar{
+  position:sticky;top:0;z-index:10;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 32px;background:var(--panel);border-bottom:1px solid var(--line);
+}
+.clipflow-appbar-right{display:flex;align-items:center;gap:14px;}
+.clipflow-content{max-width:760px;margin:0 auto;padding:48px 24px 120px;}
+
+.clipflow-wordmark{font-size:18px;font-weight:700;letter-spacing:-0.01em;}
 .clipflow-wordmark span{color:var(--orange);}
 .clipflow-restart{
-  font-size:12px;font-weight:600;color:var(--ink-dim);
-  background:var(--panel);border:1px solid var(--line);
-  padding:8px 14px;border-radius:20px;cursor:pointer;
+  font-size:13px;font-weight:600;color:var(--ink-dim);
+  background:none;border:none;cursor:pointer;padding:4px;
 }
-.clipflow-restart:hover{border-color:var(--ink-faint);}
+.clipflow-restart:hover{color:var(--ink);}
 
 .clipflow-stepper{display:flex;align-items:center;gap:8px;margin-bottom:28px;}
 .clipflow-step{display:flex;align-items:center;gap:8px;flex:1;}
@@ -62,18 +66,6 @@ html, body{margin:0;padding:0;}
 .clipflow-step-label.active{color:var(--ink);}
 .clipflow-step-line{flex:1;height:1px;background:var(--line);}
 
-.clipflow-frame{
-  background:var(--panel);border:1px solid var(--line);border-radius:24px;
-  overflow:hidden;box-shadow:0 8px 30px rgba(90,60,20,0.07);
-  min-height:520px;
-}
-.clipflow-chrome{display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--panel2);}
-.clipflow-dot{width:9px;height:9px;border-radius:50%;background:var(--line);}
-.clipflow-chrome-url{margin-left:12px;font-size:12px;color:var(--ink-dim);background:var(--panel);border-radius:20px;padding:5px 14px;}
-.clipflow-screen{padding:48px;}
-
-.clipflow-topnav{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;}
-.clipflow-topnav-logo{font-weight:700;font-size:16px;}
 .clipflow-avatar{width:32px;height:32px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);cursor:pointer;}
 
 .clipflow-login-eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--orange-dim);color:var(--orange);font-size:13px;font-weight:600;padding:6px 14px;border-radius:20px;margin-bottom:20px;}
