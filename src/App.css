@@ -96,7 +96,8 @@ html, body{margin:0;padding:0;}
 .clipflow-import-headline{font-size:22px;font-weight:700;text-align:center;margin:0 0 8px;}
 .clipflow-import-copy{color:var(--ink-dim);font-size:14px;text-align:center;margin:0 0 28px;}
 
-.clipflow-source-card{display:flex;gap:16px;padding:16px;background:var(--panel2);border-radius:16px;margin:24px auto 0;align-items:center;max-width:520px;}
+.clipflow-source-card{display:flex;gap:16px;padding:16px;background:var(--panel2);border-radius:16px;margin:24px auto 0;align-items:center;max-width:520px;cursor:pointer;transition:background .1s ease;}
+.clipflow-source-card:hover{background:var(--line);}
 .clipflow-source-thumb{width:96px;height:56px;border-radius:12px;background:linear-gradient(135deg,#3A3D46,#181920);flex-shrink:0;}
 .clipflow-source-meta{display:flex;flex-direction:column;justify-content:center;gap:4px;}
 .clipflow-source-title{font-size:14px;font-weight:600;}

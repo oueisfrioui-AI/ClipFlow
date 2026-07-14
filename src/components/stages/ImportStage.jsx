@@ -74,6 +74,7 @@ export default function ImportStage({ onSubmit }) {
       if (!video) throw new Error("Video not found or not public.");
 
       setVideoInfo({
+        videoId,
         title: video.snippet.title,
         channel: video.snippet.channelTitle,
         thumbnail: video.snippet.thumbnails.medium.url,
@@ -131,7 +132,17 @@ export default function ImportStage({ onSubmit }) {
       )}
 
       {videoInfo && (
-        <div className="clipflow-source-card">
+        <div
+          className="clipflow-source-card"
+          onClick={() =>
+            window.open(
+              `https://www.youtube.com/watch?v=${videoInfo.videoId}`,
+              "_blank",
+              "noopener,noreferrer"
+            )
+          }
+          title="Open on YouTube"
+        >
           <img
             src={videoInfo.thumbnail}
             alt={videoInfo.title}
