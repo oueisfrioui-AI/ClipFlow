@@ -42,7 +42,7 @@ function formatPublishedDate(dateStr) {
 }
 
 export default function ImportStage({ onSubmit }) {
-  const [url, setUrl] = useState("https://youtube.com/watch?v=dQw4w9WgXcQ");
+  const [url, setUrl] = useState("https://www.youtube.com/watch?v=3fLQmrN9QJk");
   const [videoInfo, setVideoInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
