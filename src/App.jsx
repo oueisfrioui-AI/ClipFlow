@@ -117,7 +117,7 @@ export default function App() {
   return (
     <div className="clipflow" data-theme={theme}>
       <div className="clipflow-appbar">
-        <div className="clipflow-wordmark">
+        <div className="clipflow-wordmark" onClick={startOver}>
           clipflow<span>.</span>
         </div>
         <div className="clipflow-appbar-right">
