@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 // Paste the API key you created in Google Cloud Console here.
 // This is a separate credential from the OAuth Client ID used for sign-in —
@@ -42,27 +42,42 @@ function formatPublishedDate(dateStr) {
 }
 
 export default function ImportStage({ onSubmit }) {
-  const [url, setUrl] = useState("https://www.youtube.com/watch?v=3fLQmrN9QJk");
+  const [url, setUrl] = useState("");
   const [videoInfo, setVideoInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   function handleUrlChange(e) {
     setUrl(e.target.value);
-    if (videoInfo) setVideoInfo(null);
-    if (error) setError(null);
   }
 
-  async function handlePreviewVideo() {
-    setError(null);
-    setVideoInfo(null);
-
-    const videoId = extractYouTubeId(url.trim());
-    if (!videoId) {
-      setError("That doesn't look like a valid YouTube link.");
+  // Auto-fetch whenever the pasted/typed text resolves to a valid video ID —
+  // debounced slightly so it doesn't fire on every keystroke of a partial URL.
+  useEffect(() => {
+    const trimmed = url.trim();
+    if (!trimmed) {
+      setVideoInfo(null);
+      setError(null);
       return;
     }
 
+    const videoId = extractYouTubeId(trimmed);
+    if (!videoId) {
+      setVideoInfo(null);
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      fetchVideo(videoId);
+    }, 400);
+
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [url]);
+
+  async function fetchVideo(videoId) {
+    setError(null);
+    setVideoInfo(null);
     setLoading(true);
     try {
       const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails,statistics&id=${videoId}&key=${YOUTUBE_API_KEY}`;
@@ -89,24 +104,12 @@ export default function ImportStage({ onSubmit }) {
     }
   }
 
-  function handleButtonClick() {
-    if (videoInfo) {
-      onSubmit(videoInfo);
-    } else {
-      handlePreviewVideo();
-    }
-  }
-
-  const buttonLabel = loading
-    ? "Loading preview..."
-    : videoInfo
-    ? "Find the moment"
-    : "Preview video";
-
   return (
     <div>
       <p className="clipflow-import-headline">Paste a link to get started</p>
-      <p className="clipflow-import-copy">Works with any public YouTube video.</p>
+      <p className="clipflow-import-copy">
+        Works with any public YouTube video — we'll fetch it automatically.
+      </p>
 
       <div className="clipflow-url-row">
         <input
@@ -114,16 +117,15 @@ export default function ImportStage({ onSubmit }) {
           value={url}
           onChange={handleUrlChange}
           placeholder="https://youtube.com/watch?v=..."
+          autoFocus
         />
-        <button
-          className="clipflow-btn clipflow-btn-primary"
-          onClick={handleButtonClick}
-          disabled={loading}
-          style={{ opacity: loading ? 0.7 : 1 }}
-        >
-          {buttonLabel}
-        </button>
       </div>
+
+      {loading && (
+        <p style={{ color: "var(--ink-dim)", fontSize: 13, textAlign: "center", marginTop: 8 }}>
+          Fetching video details...
+        </p>
+      )}
 
       {error && (
         <p style={{ color: "var(--orange)", fontSize: 13, textAlign: "center", marginTop: 8 }}>
@@ -132,33 +134,45 @@ export default function ImportStage({ onSubmit }) {
       )}
 
       {videoInfo && (
-        <div
-          className="clipflow-source-card"
-          onClick={() =>
-            window.open(
-              `https://www.youtube.com/watch?v=${videoInfo.videoId}`,
-              "_blank",
-              "noopener,noreferrer"
-            )
-          }
-          title="Open on YouTube"
-        >
-          <img
-            src={videoInfo.thumbnail}
-            alt={videoInfo.title}
-            className="clipflow-source-thumb"
-            style={{ objectFit: "cover" }}
-          />
-          <div className="clipflow-source-meta">
-            <div className="clipflow-source-title">{videoInfo.title}</div>
-            <div className="clipflow-source-sub">
-              {videoInfo.duration} · {videoInfo.channel}
-            </div>
-            <div className="clipflow-source-sub">
-              {videoInfo.views} · {videoInfo.published}
+        <>
+          <div
+            className="clipflow-source-card"
+            onClick={() =>
+              window.open(
+                `https://www.youtube.com/watch?v=${videoInfo.videoId}`,
+                "_blank",
+                "noopener,noreferrer"
+              )
+            }
+            title="Open on YouTube"
+          >
+            <img
+              src={videoInfo.thumbnail}
+              alt={videoInfo.title}
+              className="clipflow-source-thumb"
+              style={{ objectFit: "cover" }}
+            />
+            <div className="clipflow-source-meta">
+              <div className="clipflow-source-title">{videoInfo.title}</div>
+              <div className="clipflow-source-sub">
+                {videoInfo.duration} · {videoInfo.channel}
+              </div>
+              <div className="clipflow-source-sub">
+                {videoInfo.views} · {videoInfo.published}
+              </div>
             </div>
           </div>
-        </div>
+
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 20 }}>
+            <button
+              className="clipflow-btn clipflow-btn-primary"
+              style={{ width: "auto", padding: "13px 32px", margin: 0 }}
+              onClick={() => onSubmit(videoInfo)}
+            >
+              Find the moment
+            </button>
+          </div>
+        </>
       )}
     </div>
   );
