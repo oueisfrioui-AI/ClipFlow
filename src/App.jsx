@@ -1,23 +1,30 @@
 import { useState, useEffect } from "react";
 import Stepper from "./components/Stepper.jsx";
 import Sidebar from "./components/Sidebar.jsx";
+import MyLibraryPage from "./components/MyLibraryPage.jsx";
 import LoginStage from "./components/stages/LoginStage.jsx";
 import ImportStage from "./components/stages/ImportStage.jsx";
 import ProcessingStage from "./components/stages/ProcessingStage.jsx";
-import ReviewStage from "./components/stages/ReviewStage.jsx";
+import ReviewStage, { CLIPS } from "./components/stages/ReviewStage.jsx";
 import PublishStage from "./components/stages/PublishStage.jsx";
 import DoneStage from "./components/stages/DoneStage.jsx";
 
+function makeClipId() {
+  return `clip_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+}
+
 export default function App() {
   const [step, setStep] = useState("login");
-  const [selectedClip, setSelectedClip] = useState(null);
-  const [isShort, setIsShort] = useState(true);
-  const [thumbIndex, setThumbIndex] = useState(0);
   const [user, setUser] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [theme, setTheme] = useState(
     () => localStorage.getItem("clipflow-theme") || "light"
   );
+
+  const [currentVideo, setCurrentVideo] = useState(null);
+  const [selectedClipIds, setSelectedClipIds] = useState([]);
+  const [activeClipIds, setActiveClipIds] = useState([]);
+  const [library, setLibrary] = useState([]);
 
   useEffect(() => {
     localStorage.setItem("clipflow-theme", theme);
@@ -30,19 +37,82 @@ export default function App() {
 
   function startOver() {
     setStep("import");
-    setSelectedClip(null);
-    setIsShort(true);
-    setThumbIndex(0);
+    setCurrentVideo(null);
+    setSelectedClipIds([]);
+    setActiveClipIds([]);
   }
 
   function logout() {
     setSidebarOpen(false);
     setStep("login");
-    setSelectedClip(null);
-    setIsShort(true);
-    setThumbIndex(0);
+    setCurrentVideo(null);
+    setSelectedClipIds([]);
+    setActiveClipIds([]);
     setUser(null);
   }
+
+  function openLibrary() {
+    setSidebarOpen(false);
+    setStep("library");
+  }
+
+  function toggleClipSelection(id) {
+    setSelectedClipIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  }
+
+  // Turns the selected candidate clips into real library entries tied to
+  // the current video, then hands them to the Publish stage.
+  function handleReviewContinue() {
+    const newEntries = selectedClipIds.map((clipTemplateId) => {
+      const template = CLIPS.find((c) => c.id === clipTemplateId);
+      return {
+        id: makeClipId(),
+        videoId: currentVideo.videoId,
+        videoTitle: currentVideo.title,
+        videoThumbnail: currentVideo.thumbnail,
+        videoChannel: currentVideo.channel,
+        title: template.title,
+        description:
+          "Full video linked below. Cut with ClipFlow from " + currentVideo.title + ".",
+        duration: template.duration,
+        thumbnailIndex: 0,
+        isShort: true,
+        status: "draft",
+        publishedUrl: null,
+      };
+    });
+
+    setLibrary((prev) => [...newEntries, ...prev]);
+    setActiveClipIds(newEntries.map((c) => c.id));
+    setSelectedClipIds([]);
+    setStep("publish");
+  }
+
+  function handlePostClip(id) {
+    setLibrary((prev) =>
+      prev.map((c) =>
+        c.id === id
+          ? { ...c, status: "published", publishedUrl: `youtube.com/shorts/${id}` }
+          : c
+      )
+    );
+  }
+
+  function handleDeleteClip(id) {
+    setLibrary((prev) => prev.filter((c) => c.id !== id));
+    setActiveClipIds((prev) => prev.filter((x) => x !== id));
+  }
+
+  function handleSaveClip(id, updates) {
+    setLibrary((prev) => prev.map((c) => (c.id === id ? { ...c, ...updates } : c)));
+  }
+
+  const activeClips = activeClipIds
+    .map((id) => library.find((c) => c.id === id))
+    .filter(Boolean);
+  const activePublishedCount = activeClips.filter((c) => c.status === "published").length;
 
   return (
     <div className="clipflow" data-theme={theme}>
@@ -52,9 +122,14 @@ export default function App() {
         </div>
         <div className="clipflow-appbar-right">
           {step !== "login" && (
-            <button className="clipflow-restart" onClick={startOver}>
-              Start over
-            </button>
+            <>
+              <button className="clipflow-restart" onClick={openLibrary}>
+                My Library
+              </button>
+              <button className="clipflow-restart" onClick={startOver}>
+                Start over
+              </button>
+            </>
           )}
           {user &&
             (user.picture ? (
@@ -76,7 +151,7 @@ export default function App() {
       </div>
 
       <div className="clipflow-content">
-        {step !== "login" && <Stepper step={step} />}
+        {step !== "login" && step !== "library" && <Stepper step={step} />}
 
         {step === "login" && (
           <LoginStage
@@ -87,7 +162,12 @@ export default function App() {
         )}
 
         {step === "import" && (
-          <ImportStage onSubmit={() => setStep("processing")} />
+          <ImportStage
+            onSubmit={(info) => {
+              setCurrentVideo(info);
+              setStep("processing");
+            }}
+          />
         )}
 
         {step === "processing" && (
@@ -96,24 +176,37 @@ export default function App() {
 
         {step === "review" && (
           <ReviewStage
-            selectedClip={selectedClip}
-            onSelectClip={setSelectedClip}
-            onContinue={() => setStep("publish")}
+            selectedClipIds={selectedClipIds}
+            onToggleClip={toggleClipSelection}
+            onContinue={handleReviewContinue}
           />
         )}
 
         {step === "publish" && (
           <PublishStage
-            isShort={isShort}
-            onToggleShort={() => setIsShort(!isShort)}
-            thumbIndex={thumbIndex}
-            onSelectThumb={setThumbIndex}
-            onPublish={() => setStep("done")}
+            clips={activeClips}
+            onPost={handlePostClip}
+            onDelete={handleDeleteClip}
+            onSave={handleSaveClip}
+            onDone={() => setStep("done")}
           />
         )}
 
         {step === "done" && (
-          <DoneStage isShort={isShort} onRestart={startOver} />
+          <DoneStage
+            publishedCount={activePublishedCount}
+            onRestart={startOver}
+            onOpenLibrary={openLibrary}
+          />
+        )}
+
+        {step === "library" && (
+          <MyLibraryPage
+            library={library}
+            onPost={handlePostClip}
+            onDelete={handleDeleteClip}
+            onSave={handleSaveClip}
+          />
         )}
       </div>
 
@@ -124,6 +217,8 @@ export default function App() {
         theme={theme}
         onToggleTheme={toggleTheme}
         onLogout={logout}
+        library={library}
+        onOpenLibrary={openLibrary}
       />
     </div>
   );

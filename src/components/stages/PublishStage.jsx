@@ -1,70 +1,36 @@
-export default function PublishStage({
-  isShort,
-  onToggleShort,
-  thumbIndex,
-  onSelectThumb,
-  onPublish,
-}) {
+import ClipCard from "../ClipCard.jsx";
+
+export default function PublishStage({ clips, onPost, onDelete, onSave, onDone }) {
+  const publishedCount = clips.filter((c) => c.status === "published").length;
+
   return (
-    <div className="clipflow-publish-grid">
-      <div className="clipflow-preview-player">
-        <div className="clipflow-preview-caption">0:38 · vertical · captions on</div>
-      </div>
+    <div>
+      <p className="clipflow-import-headline">Publish your clips</p>
+      <p className="clipflow-import-copy">
+        Post each one when it's ready, fine-tune the details, or remove the ones you don't want.
+      </p>
 
-      <div>
-        <div className="clipflow-form-group">
-          <label className="clipflow-form-label">Title</label>
-          <input
-            className="clipflow-field"
-            defaultValue="The moment my morning routine actually clicked"
-          />
+      {clips.length === 0 ? (
+        <p style={{ textAlign: "center", color: "var(--ink-dim)", fontSize: 14 }}>
+          Nothing left here — check My Library or start over to pull more clips.
+        </p>
+      ) : (
+        <div className="clipflow-lib-grid">
+          {clips.map((clip) => (
+            <ClipCard
+              key={clip.id}
+              clip={clip}
+              onPost={onPost}
+              onDelete={onDelete}
+              onSave={onSave}
+            />
+          ))}
         </div>
+      )}
 
-        <div className="clipflow-form-group">
-          <label className="clipflow-form-label">Description</label>
-          <textarea
-            className="clipflow-field textarea"
-            defaultValue="Day 9 of rebuilding my mornings from scratch — this is the part that changed everything. Full video linked below."
-          />
-        </div>
-
-        <div className="clipflow-form-group">
-          <label className="clipflow-form-label">Thumbnail</label>
-          <div className="clipflow-thumb-row">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className={
-                  "clipflow-thumb-opt" + (thumbIndex === i ? " selected" : "")
-                }
-                onClick={() => onSelectThumb(i)}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className="clipflow-toggle-row">
-          <span style={{ fontSize: 14, fontWeight: 500 }}>
-            Publish as a YouTube Short
-          </span>
-          <button
-            className={"clipflow-toggle " + (isShort ? "on" : "off")}
-            onClick={onToggleShort}
-            aria-label="Toggle YouTube Short"
-          />
-        </div>
-
-        <div className="clipflow-toggle-row" style={{ borderTop: "none" }}>
-          <span style={{ fontSize: 14, fontWeight: 500 }}>Visibility</span>
-          <span style={{ fontSize: 13, color: "var(--ink-dim)" }}>Public</span>
-        </div>
-
-        <button
-          className="clipflow-btn clipflow-btn-primary"
-          style={{ marginTop: 18 }}
-          onClick={onPublish}
-        >
-          Publish to YouTube
+      <div className="clipflow-review-footer">
+        <button className="clipflow-btn clipflow-btn-primary" onClick={onDone}>
+          {publishedCount > 0 ? "Finish" : "Skip for now"}
         </button>
       </div>
     </div>
