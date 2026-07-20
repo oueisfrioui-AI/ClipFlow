@@ -2,6 +2,7 @@ import { useState } from "react";
 
 export default function ClipCard({ clip, onPost, onDelete, onSave, showSource }) {
   const [editing, setEditing] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const [title, setTitle] = useState(clip.title);
   const [description, setDescription] = useState(clip.description);
   const [thumbIndex, setThumbIndex] = useState(clip.thumbnailIndex);
@@ -29,11 +30,38 @@ export default function ClipCard({ clip, onPost, onDelete, onSave, showSource })
     <>
       <div className="clipflow-lib-card">
         <div className="clipflow-lib-thumb">
-          <div className={"clipflow-lib-status " + clip.status}>
-            {clip.status === "published" ? "Published" : "Draft"}
-          </div>
-          <div className="clipflow-clip-play">▶</div>
-          <div className="clipflow-clip-duration">{clip.duration}</div>
+          {playing ? (
+            <>
+              <iframe
+                className="clipflow-clip-player"
+                src={`https://www.youtube.com/embed/${clip.videoId}?start=${clip.start}&end=${clip.end}&autoplay=1&rel=0`}
+                title={clip.title}
+                allow="autoplay; encrypted-media"
+                allowFullScreen
+              />
+              <button
+                className="clipflow-clip-stop"
+                onClick={() => setPlaying(false)}
+                aria-label="Stop preview"
+              >
+                ✕
+              </button>
+            </>
+          ) : (
+            <>
+              <div className={"clipflow-lib-status " + clip.status}>
+                {clip.status === "published" ? "Published" : "Draft"}
+              </div>
+              <button
+                className="clipflow-clip-play"
+                onClick={() => setPlaying(true)}
+                aria-label="Preview clip"
+              >
+                ▶
+              </button>
+              <div className="clipflow-clip-duration">{clip.duration}</div>
+            </>
+          )}
         </div>
         <div className="clipflow-lib-body">
           <p className="clipflow-lib-title">{clip.title}</p>

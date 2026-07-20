@@ -1,13 +1,16 @@
+import { useState } from "react";
+
 export const CLIPS = [
-  { id: 0, duration: "0:38", title: "The moment the routine actually clicked" },
-  { id: 1, duration: "0:24", title: "\u201cI almost quit on day 9\u201d" },
-  { id: 2, duration: "0:51", title: "Before and after, side by side" },
-  { id: 3, duration: "0:19", title: "The one line that stuck with me" },
-  { id: 4, duration: "0:44", title: "Why nobody tells you this part" },
-  { id: 5, duration: "0:29", title: "The reaction says it all" },
+  { id: 0, duration: "0:38", title: "The moment the routine actually clicked", start: 42, end: 80 },
+  { id: 1, duration: "0:24", title: "\u201cI almost quit on day 9\u201d", start: 187, end: 211 },
+  { id: 2, duration: "0:51", title: "Before and after, side by side", start: 336, end: 387 },
+  { id: 3, duration: "0:19", title: "The one line that stuck with me", start: 512, end: 531 },
+  { id: 4, duration: "0:44", title: "Why nobody tells you this part", start: 641, end: 685 },
+  { id: 5, duration: "0:29", title: "The reaction says it all", start: 799, end: 828 },
 ];
 
-export default function ReviewStage({ selectedClipIds, onToggleClip, onContinue }) {
+export default function ReviewStage({ videoId, selectedClipIds, onToggleClip, onContinue }) {
+  const [playingId, setPlayingId] = useState(null);
   const count = selectedClipIds.length;
 
   return (
@@ -27,12 +30,13 @@ export default function ReviewStage({ selectedClipIds, onToggleClip, onContinue 
       </div>
 
       <p className="clipflow-review-hint">
-        Tap as many clips as you'd like — they'll all move to Publish together.
+        Tap ▶ to preview, tap the card to select — pick as many as you'd like.
       </p>
 
       <div className="clipflow-clip-row">
         {CLIPS.map((clip) => {
           const selected = selectedClipIds.includes(clip.id);
+          const playing = playingId === clip.id;
           return (
             <div
               className={"clipflow-clip-card" + (selected ? " selected" : "")}
@@ -40,9 +44,42 @@ export default function ReviewStage({ selectedClipIds, onToggleClip, onContinue 
               onClick={() => onToggleClip(clip.id)}
             >
               <div className="clipflow-clip-thumb">
-                <div className="clipflow-clip-play">▶</div>
-                <div className="clipflow-clip-duration">{clip.duration}</div>
-                {selected && <div className="clipflow-clip-check">✓</div>}
+                {playing ? (
+                  <>
+                    <iframe
+                      className="clipflow-clip-player"
+                      src={`https://www.youtube.com/embed/${videoId}?start=${clip.start}&end=${clip.end}&autoplay=1&rel=0`}
+                      title={clip.title}
+                      allow="autoplay; encrypted-media"
+                      allowFullScreen
+                    />
+                    <button
+                      className="clipflow-clip-stop"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPlayingId(null);
+                      }}
+                      aria-label="Stop preview"
+                    >
+                      ✕
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      className="clipflow-clip-play"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setPlayingId(clip.id);
+                      }}
+                      aria-label="Preview clip"
+                    >
+                      ▶
+                    </button>
+                    <div className="clipflow-clip-duration">{clip.duration}</div>
+                    {selected && <div className="clipflow-clip-check">✓</div>}
+                  </>
+                )}
               </div>
               <div className="clipflow-clip-body">
                 <p className="clipflow-clip-title">{clip.title}</p>

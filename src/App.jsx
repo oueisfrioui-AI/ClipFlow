@@ -77,6 +77,8 @@ export default function App() {
         description:
           "Full video linked below. Cut with ClipFlow from " + currentVideo.title + ".",
         duration: template.duration,
+        start: template.start,
+        end: template.end,
         thumbnailIndex: 0,
         isShort: true,
         status: "draft",
@@ -176,6 +178,7 @@ export default function App() {
 
         {step === "review" && (
           <ReviewStage
+            videoId={currentVideo?.videoId}
             selectedClipIds={selectedClipIds}
             onToggleClip={toggleClipSelection}
             onContinue={handleReviewContinue}
