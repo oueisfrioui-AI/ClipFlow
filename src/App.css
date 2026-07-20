@@ -192,21 +192,35 @@ html, body{margin:0;padding:0;}
 .clipflow-lib-actions button.primary{background:var(--orange);border-color:var(--orange);color:#FFFFFF;}
 .clipflow-lib-actions button.danger{color:#D14343;}
 
-.clipflow-lib-edit-form{padding:14px;display:flex;flex-direction:column;gap:10px;}
-.clipflow-lib-edit-form input,
-.clipflow-lib-edit-form textarea{
-  width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
-  background:var(--panel);color:var(--ink);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;resize:none;
+.clipflow-modal-backdrop{position:fixed;inset:0;background:rgba(20,15,8,0.5);z-index:60;animation:clipflow-fade-in .15s ease;}
+.clipflow-modal{
+  position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:420px;max-width:90vw;max-height:85vh;overflow-y:auto;
+  background:var(--panel);border-radius:20px;border:1px solid var(--line);
+  box-shadow:0 24px 60px rgba(0,0,0,0.3);z-index:61;padding:26px;
+  animation:clipflow-pop-in .18s ease;
 }
-.clipflow-lib-edit-form input:focus,
-.clipflow-lib-edit-form textarea:focus{outline:none;border-color:var(--orange);}
-.clipflow-lib-edit-actions{display:flex;gap:8px;}
-.clipflow-lib-edit-actions button{
-  flex:1;padding:9px 10px;font-size:12.5px;font-weight:600;border-radius:10px;
+@keyframes clipflow-fade-in{from{opacity:0;}to{opacity:1;}}
+@keyframes clipflow-pop-in{from{opacity:0;transform:translate(-50%,-50%) scale(0.96);}to{opacity:1;transform:translate(-50%,-50%) scale(1);}}
+.clipflow-modal-header{display:flex;align-items:center;justify-content:space-between;font-size:15px;font-weight:700;margin-bottom:20px;}
+.clipflow-modal-close{background:none;border:none;color:var(--ink-dim);font-size:16px;cursor:pointer;padding:4px;line-height:1;}
+.clipflow-modal-close:hover{color:var(--ink);}
+.clipflow-modal-body{display:flex;flex-direction:column;gap:16px;}
+.clipflow-modal-body input,
+.clipflow-modal-body textarea{
+  width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);
+  background:var(--panel2);color:var(--ink);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;resize:none;
+}
+.clipflow-modal-body input:focus,
+.clipflow-modal-body textarea:focus{outline:none;border-color:var(--orange);}
+.clipflow-modal-actions{display:flex;gap:10px;margin-top:22px;}
+.clipflow-modal-actions button{
+  flex:1;padding:12px;border-radius:12px;font-size:13.5px;font-weight:600;
   border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;
   font-family:'Plus Jakarta Sans',sans-serif;
 }
-.clipflow-lib-edit-actions button.primary{background:var(--orange);border-color:var(--orange);color:#FFFFFF;}
+.clipflow-modal-actions button:hover{border-color:var(--ink-faint);}
+.clipflow-modal-actions button.primary{background:var(--orange);border-color:var(--orange);color:#FFFFFF;}
 
 .clipflow-lib-video-group{margin-bottom:40px;}
 .clipflow-lib-video-group:last-child{margin-bottom:0;}
