@@ -239,7 +239,8 @@ html, body{margin:0;padding:0;}
 
 .clipflow-lib-video-group{margin-bottom:40px;}
 .clipflow-lib-video-group:last-child{margin-bottom:0;}
-.clipflow-lib-video-header{display:flex;gap:14px;align-items:center;margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--line);}
+.clipflow-lib-video-header{display:flex;gap:14px;align-items:center;margin:-10px -10px 18px;padding:10px 10px 16px;border-bottom:1px solid var(--line);cursor:pointer;border-radius:12px;transition:background .1s ease;}
+.clipflow-lib-video-header:hover{background:var(--panel2);}
 .clipflow-lib-video-thumb{width:96px;height:56px;border-radius:10px;flex-shrink:0;background:var(--panel2);}
 .clipflow-lib-video-title{font-size:15px;font-weight:700;margin:0 0 2px;}
 .clipflow-lib-video-sub{font-size:12px;color:var(--ink-dim);margin:0;}

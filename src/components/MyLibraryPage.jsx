@@ -39,7 +39,17 @@ export default function MyLibraryPage({ library, onPost, onDelete, onSave }) {
 
       {groups.map((group) => (
         <div className="clipflow-lib-video-group" key={group.videoId}>
-          <div className="clipflow-lib-video-header">
+          <div
+            className="clipflow-lib-video-header"
+            onClick={() =>
+              window.open(
+                `https://www.youtube.com/watch?v=${group.videoId}`,
+                "_blank",
+                "noopener,noreferrer"
+              )
+            }
+            title="Open on YouTube"
+          >
             <img
               src={group.videoThumbnail}
               alt={group.videoTitle}
