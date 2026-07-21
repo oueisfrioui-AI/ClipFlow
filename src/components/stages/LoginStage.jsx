@@ -1,27 +1,12 @@
-import { useState } from "react";
 import GoogleIcon from "../GoogleIcon.jsx";
 import { API_BASE } from "../../lib/api.js";
 
 export default function LoginStage() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  async function handleGoogleLogin() {
-    setError(null);
-    setLoading(true);
-    try {
-      // /auth/google returns the Google OAuth URL as a JSON string —
-      // we send the browser there with a full-page redirect.
-      const res = await fetch(`${API_BASE}/auth/google`, {
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Request failed.");
-      const url = await res.json();
-      window.location.href = url;
-    } catch (err) {
-      setError("Couldn't reach sign-in right now. Try again in a moment.");
-      setLoading(false);
-    }
+  function handleGoogleLogin() {
+    // /auth/google issues a real HTTP redirect straight to Google — a plain
+    // page navigation follows it fine, but fetch() can't (CORS blocks the
+    // redirect hop to accounts.google.com), so we navigate directly.
+    window.location.href = `${API_BASE}/auth/google`;
   }
 
   return (
@@ -35,19 +20,10 @@ export default function LoginStage() {
         cuts it, and gets it ready to publish.
       </p>
       <div className="clipflow-card clipflow-login-card">
-        <button
-          className="clipflow-google-btn-real"
-          onClick={handleGoogleLogin}
-          disabled={loading}
-        >
+        <button className="clipflow-google-btn-real" onClick={handleGoogleLogin}>
           <GoogleIcon />
-          {loading ? "Redirecting..." : "Continue with Google"}
+          Continue with Google
         </button>
-        {error && (
-          <p style={{ color: "var(--orange)", fontSize: 13, textAlign: "center", marginTop: 14 }}>
-            {error}
-          </p>
-        )}
         <p className="clipflow-login-fineprint">
           By continuing, you agree to ClipFlow's Terms and Privacy Policy.
         </p>
