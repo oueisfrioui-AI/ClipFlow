@@ -8,6 +8,7 @@ import ProcessingStage from "./components/stages/ProcessingStage.jsx";
 import ReviewStage, { CLIPS } from "./components/stages/ReviewStage.jsx";
 import PublishStage from "./components/stages/PublishStage.jsx";
 import DoneStage from "./components/stages/DoneStage.jsx";
+import { API_BASE } from "./lib/api.js";
 
 function makeClipId() {
   return `clip_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -25,6 +26,34 @@ export default function App() {
   const [selectedClipIds, setSelectedClipIds] = useState([]);
   const [activeClipIds, setActiveClipIds] = useState([]);
   const [library, setLibrary] = useState([]);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  // On load (including landing back here after the Google OAuth redirect),
+  // ask the backend if there's already a logged-in session.
+  useEffect(() => {
+    async function checkSession() {
+      try {
+        const res = await fetch(`${API_BASE}/auth/me`, {
+          credentials: "include",
+        });
+        if (res.ok) {
+          const me = await res.json();
+          setUser({
+            id: me.id,
+            name: me.name,
+            email: me.email,
+            picture: me.picture_url,
+          });
+          setStep((s) => (s === "login" ? "import" : s));
+        }
+      } catch (err) {
+        // Not logged in / backend unreachable — stay on the login screen.
+      } finally {
+        setCheckingSession(false);
+      }
+    }
+    checkSession();
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("clipflow-theme", theme);
@@ -42,8 +71,16 @@ export default function App() {
     setActiveClipIds([]);
   }
 
-  function logout() {
+  async function logout() {
     setSidebarOpen(false);
+    try {
+      await fetch(`${API_BASE}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (err) {
+      // Even if the request fails, still clear the local session below.
+    }
     setStep("login");
     setCurrentVideo(null);
     setSelectedClipIds([]);
@@ -116,6 +153,16 @@ export default function App() {
     .filter(Boolean);
   const activePublishedCount = activeClips.filter((c) => c.status === "published").length;
 
+  if (checkingSession) {
+    return (
+      <div className="clipflow" data-theme={theme}>
+        <div className="clipflow-content" style={{ textAlign: "center", paddingTop: 120 }}>
+          <p style={{ color: "var(--ink-dim)", fontSize: 14 }}>Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="clipflow" data-theme={theme}>
       <div className="clipflow-appbar">
@@ -155,13 +202,7 @@ export default function App() {
       <div className="clipflow-content">
         {step !== "login" && step !== "library" && <Stepper step={step} />}
 
-        {step === "login" && (
-          <LoginStage
-            onContinue={() => setStep("import")}
-            onLogin={setUser}
-            theme={theme}
-          />
-        )}
+        {step === "login" && <LoginStage />}
 
         {step === "import" && (
           <ImportStage

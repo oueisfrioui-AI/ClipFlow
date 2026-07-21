@@ -1,28 +1,27 @@
-import { useRef, useEffect, useState } from "react";
-import { GoogleLogin } from "@react-oauth/google";
-import { jwtDecode } from "jwt-decode";
+import { useState } from "react";
+import GoogleIcon from "../GoogleIcon.jsx";
+import { API_BASE } from "../../lib/api.js";
 
-export default function LoginStage({ onContinue, onLogin, theme }) {
-  const buttonWrapRef = useRef(null);
-  const [buttonWidth, setButtonWidth] = useState(280);
+export default function LoginStage() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    if (buttonWrapRef.current) {
-      setButtonWidth(Math.round(buttonWrapRef.current.offsetWidth));
+  async function handleGoogleLogin() {
+    setError(null);
+    setLoading(true);
+    try {
+      // /auth/google returns the Google OAuth URL as a JSON string —
+      // we send the browser there with a full-page redirect.
+      const res = await fetch(`${API_BASE}/auth/google`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Request failed.");
+      const url = await res.json();
+      window.location.href = url;
+    } catch (err) {
+      setError("Couldn't reach sign-in right now. Try again in a moment.");
+      setLoading(false);
     }
-  }, []);
-
-  function handleSuccess(credentialResponse) {
-    // credentialResponse.credential is a signed JWT from Google.
-    // Decoding it client-side gives us the user's name/email/picture.
-    // (Decoding is NOT the same as verifying — see note below.)
-    const decoded = jwtDecode(credentialResponse.credential);
-    onLogin({
-      name: decoded.name,
-      email: decoded.email,
-      picture: decoded.picture,
-    });
-    onContinue();
   }
 
   return (
@@ -36,18 +35,19 @@ export default function LoginStage({ onContinue, onLogin, theme }) {
         cuts it, and gets it ready to publish.
       </p>
       <div className="clipflow-card clipflow-login-card">
-        <div className="clipflow-google-btn" ref={buttonWrapRef}>
-          <GoogleLogin
-            onSuccess={handleSuccess}
-            onError={() => console.log("Google login failed")}
-            theme={theme === "dark" ? "outline" : "filled_black"}
-            shape="pill"
-            size="large"
-            text="continue_with"
-            logo_alignment="left"
-            width={buttonWidth}
-          />
-        </div>
+        <button
+          className="clipflow-google-btn-real"
+          onClick={handleGoogleLogin}
+          disabled={loading}
+        >
+          <GoogleIcon />
+          {loading ? "Redirecting..." : "Continue with Google"}
+        </button>
+        {error && (
+          <p style={{ color: "var(--orange)", fontSize: 13, textAlign: "center", marginTop: 14 }}>
+            {error}
+          </p>
+        )}
         <p className="clipflow-login-fineprint">
           By continuing, you agree to ClipFlow's Terms and Privacy Policy.
         </p>
