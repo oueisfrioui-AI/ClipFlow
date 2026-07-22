@@ -220,6 +220,7 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
         >
           <div className="clipflow-clip-bar-track" ref={trackRef}>
             <div className="clipflow-clip-bar-fill" style={{ width: `${progressPct}%` }} />
+            <div className="clipflow-clip-bar-thumb" style={{ left: `${progressPct}%` }} />
           </div>
         </div>
 
