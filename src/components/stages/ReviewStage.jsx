@@ -61,9 +61,7 @@ export default function ReviewStage({ videoId, selectedClipIds, onToggleClip, on
                         setPlayingId(clip.id);
                       }}
                       aria-label="Preview clip"
-                    >
-                      ▶
-                    </button>
+                    />
                     <div className="clipflow-clip-duration">{clip.duration}</div>
                     {selected && <div className="clipflow-clip-check">✓</div>}
                   </>

@@ -149,10 +149,13 @@ html, body{margin:0;padding:0;}
 .clipflow-clip-card.selected{border-color:var(--orange);}
 .clipflow-clip-thumb{aspect-ratio:9/14;background:linear-gradient(160deg,#3A3D46,#14151A);position:relative;}
 .clipflow-clip-duration{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,0.55);color:#FFFFFF;font-size:11px;padding:4px 9px;border-radius:20px;font-weight:600;}
-.clipflow-clip-top-mask{position:absolute;top:0;left:0;right:0;height:52px;background:linear-gradient(180deg,rgba(0,0,0,0.85),rgba(0,0,0,0));z-index:1;pointer-events:none;}
+.clipflow-clip-top-mask{position:absolute;top:0;left:0;right:0;height:60px;background:linear-gradient(180deg,rgba(0,0,0,0.9),rgba(0,0,0,0));z-index:1;pointer-events:none;}
+.clipflow-clip-bottom-mask{position:absolute;bottom:0;right:0;width:76px;height:36px;background:linear-gradient(135deg,rgba(0,0,0,0) 0%,rgba(0,0,0,0.9) 45%);z-index:1;pointer-events:none;}
 .clipflow-clip-timer{position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,0.55);color:#FFFFFF;font-size:11px;padding:4px 9px;border-radius:20px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:0.02em;z-index:2;}
-.clipflow-clip-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);color:#FFFFFF;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;font-size:14px;}
-.clipflow-clip-play:hover{background:rgba(255,255,255,0.32);}
+.clipflow-clip-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:48px;height:48px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;box-shadow:0 6px 18px rgba(255,90,46,0.45),0 0 0 6px rgba(255,90,46,0.16);transition:transform 0.15s ease,box-shadow 0.15s ease;}
+.clipflow-clip-play:hover{transform:translate(-50%,-50%) scale(1.08);box-shadow:0 8px 22px rgba(255,90,46,0.55),0 0 0 8px rgba(255,90,46,0.2);}
+.clipflow-clip-play:active{transform:translate(-50%,-50%) scale(0.96);}
+.clipflow-clip-play::after{content:"";width:0;height:0;border-style:solid;border-width:8px 0 8px 13px;border-color:transparent transparent transparent #FFFFFF;margin-left:3px;}
 .clipflow-clip-player{position:absolute;inset:0;width:100%;height:100%;border:none;}
 .clipflow-clip-stop{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,0.6);color:#FFFFFF;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;z-index:2;}
 .clipflow-clip-stop:hover{background:rgba(0,0,0,0.8);}

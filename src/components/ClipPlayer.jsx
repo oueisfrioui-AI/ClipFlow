@@ -115,9 +115,11 @@ export default function ClipPlayer({ videoId, start, end, onClose }) {
       <div className="clipflow-clip-player" style={{ overflow: "hidden" }}>
         <div ref={mountRef} style={{ width: "100%", height: "100%" }} />
       </div>
-      {/* Masks YouTube's own title/channel overlay so this reads as a clip,
-          not an embedded video with branding on top of it. */}
+      {/* Masks YouTube's own title/channel overlay (top) and logo/link
+          watermark (bottom-right) so this reads as a clip, not an embedded
+          video with branding on top of it. */}
       <div className="clipflow-clip-top-mask" />
+      <div className="clipflow-clip-bottom-mask" />
       <div className="clipflow-clip-timer">
         {formatTime(elapsed)} / {formatTime(duration)}
       </div>

@@ -47,9 +47,7 @@ export default function ClipCard({ clip, onPost, onDelete, onSave, showSource })
                 className="clipflow-clip-play"
                 onClick={() => setPlaying(true)}
                 aria-label="Preview clip"
-              >
-                ▶
-              </button>
+              />
               <div className="clipflow-clip-duration">{clip.duration}</div>
             </>
           )}
