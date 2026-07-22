@@ -45,7 +45,6 @@ html, body{margin:0;padding:0;}
 .clipflow-content{max-width:760px;margin:0 auto;padding:48px 24px 120px;}
 
 .clipflow-wordmark{font-size:18px;font-weight:700;letter-spacing:-0.01em;}
-.clipflow-wordmark:hover{cursor: pointer;}
 .clipflow-wordmark span{color:var(--orange);}
 .clipflow-restart{
   font-size:13px;font-weight:600;color:var(--ink-dim);
@@ -150,6 +149,8 @@ html, body{margin:0;padding:0;}
 .clipflow-clip-card.selected{border-color:var(--orange);}
 .clipflow-clip-thumb{aspect-ratio:9/14;background:linear-gradient(160deg,#3A3D46,#14151A);position:relative;}
 .clipflow-clip-duration{position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,0.55);color:#FFFFFF;font-size:11px;padding:4px 9px;border-radius:20px;font-weight:600;}
+.clipflow-clip-top-mask{position:absolute;top:0;left:0;right:0;height:52px;background:linear-gradient(180deg,rgba(0,0,0,0.85),rgba(0,0,0,0));z-index:1;pointer-events:none;}
+.clipflow-clip-timer{position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,0.55);color:#FFFFFF;font-size:11px;padding:4px 9px;border-radius:20px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:0.02em;z-index:2;}
 .clipflow-clip-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.2);color:#FFFFFF;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;font-size:14px;}
 .clipflow-clip-play:hover{background:rgba(255,255,255,0.32);}
 .clipflow-clip-player{position:absolute;inset:0;width:100%;height:100%;border:none;}

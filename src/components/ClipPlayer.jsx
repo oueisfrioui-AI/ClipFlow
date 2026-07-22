@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Loads the YouTube IFrame JS API once and shares the promise across every
 // player instance on the page, since YouTube only fires
@@ -27,6 +27,13 @@ function loadYouTubeAPI() {
   return apiPromise;
 }
 
+function formatTime(seconds) {
+  const s = Math.max(0, Math.floor(seconds));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${String(r).padStart(2, "0")}`;
+}
+
 // Renders a YouTube clip that is force-confined to [start, end]. Unlike the
 // plain <iframe src="...?start=..&end=.."> approach, this uses the real
 // IFrame JS API and actively polls playback position, so the clip reliably
@@ -36,6 +43,8 @@ export default function ClipPlayer({ videoId, start, end, onClose }) {
   const mountRef = useRef(null);
   const playerRef = useRef(null);
   const pollRef = useRef(null);
+  const duration = Math.max(0, end - start);
+  const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,8 +88,11 @@ export default function ClipPlayer({ videoId, start, end, onClose }) {
               if (t >= end || t < start - 1) {
                 player.pauseVideo();
                 player.seekTo(start, true);
+                setElapsed(0);
                 clearInterval(pollRef.current);
+                return;
               }
+              setElapsed(Math.min(duration, Math.max(0, t - start)));
             }, 200);
           },
         },
@@ -102,6 +114,12 @@ export default function ClipPlayer({ videoId, start, end, onClose }) {
     <>
       <div className="clipflow-clip-player" style={{ overflow: "hidden" }}>
         <div ref={mountRef} style={{ width: "100%", height: "100%" }} />
+      </div>
+      {/* Masks YouTube's own title/channel overlay so this reads as a clip,
+          not an embedded video with branding on top of it. */}
+      <div className="clipflow-clip-top-mask" />
+      <div className="clipflow-clip-timer">
+        {formatTime(elapsed)} / {formatTime(duration)}
       </div>
       <button
         className="clipflow-clip-stop"
