@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ClipPlayer from "../ClipPlayer.jsx";
 
 export const CLIPS = [
   { id: 0, duration: "0:38", title: "The moment the routine actually clicked", start: 42, end: 80 },
@@ -45,25 +46,12 @@ export default function ReviewStage({ videoId, selectedClipIds, onToggleClip, on
             >
               <div className="clipflow-clip-thumb">
                 {playing ? (
-                  <>
-                    <iframe
-                      className="clipflow-clip-player"
-                      src={`https://www.youtube.com/embed/${videoId}?start=${clip.start}&end=${clip.end}&autoplay=1&rel=0`}
-                      title={clip.title}
-                      allow="autoplay; encrypted-media"
-                      allowFullScreen
-                    />
-                    <button
-                      className="clipflow-clip-stop"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setPlayingId(null);
-                      }}
-                      aria-label="Stop preview"
-                    >
-                      ✕
-                    </button>
-                  </>
+                  <ClipPlayer
+                    videoId={videoId}
+                    start={clip.start}
+                    end={clip.end}
+                    onClose={() => setPlayingId(null)}
+                  />
                 ) : (
                   <>
                     <button

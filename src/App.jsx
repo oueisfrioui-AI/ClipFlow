@@ -72,20 +72,24 @@ export default function App() {
   }
 
   async function logout() {
+    // Clear local session state immediately (don't wait on the network
+    // request) so there's no window where the UI still thinks a user is
+    // logged in.
     setSidebarOpen(false);
+    setStep("login");
+    setCurrentVideo(null);
+    setSelectedClipIds([]);
+    setActiveClipIds([]);
+    setUser(null);
+
     try {
       await fetch(`${API_BASE}/auth/logout`, {
         method: "POST",
         credentials: "include",
       });
     } catch (err) {
-      // Even if the request fails, still clear the local session below.
+      // Local session is already cleared above regardless of this outcome.
     }
-    setStep("login");
-    setCurrentVideo(null);
-    setSelectedClipIds([]);
-    setActiveClipIds([]);
-    setUser(null);
   }
 
   function openLibrary() {
@@ -166,7 +170,11 @@ export default function App() {
   return (
     <div className="clipflow" data-theme={theme}>
       <div className="clipflow-appbar">
-        <div className="clipflow-wordmark" onClick={startOver}>
+        <div
+          className="clipflow-wordmark"
+          onClick={user && step !== "login" ? startOver : undefined}
+          style={{ cursor: user && step !== "login" ? "pointer" : "default" }}
+        >
           clipflow<span>.</span>
         </div>
         <div className="clipflow-appbar-right">

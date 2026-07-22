@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ClipPlayer from "./ClipPlayer.jsx";
 
 export default function ClipCard({ clip, onPost, onDelete, onSave, showSource }) {
   const [editing, setEditing] = useState(false);
@@ -31,22 +32,12 @@ export default function ClipCard({ clip, onPost, onDelete, onSave, showSource })
       <div className="clipflow-lib-card">
         <div className="clipflow-lib-thumb">
           {playing ? (
-            <>
-              <iframe
-                className="clipflow-clip-player"
-                src={`https://www.youtube.com/embed/${clip.videoId}?start=${clip.start}&end=${clip.end}&autoplay=1&rel=0`}
-                title={clip.title}
-                allow="autoplay; encrypted-media"
-                allowFullScreen
-              />
-              <button
-                className="clipflow-clip-stop"
-                onClick={() => setPlaying(false)}
-                aria-label="Stop preview"
-              >
-                ✕
-              </button>
-            </>
+            <ClipPlayer
+              videoId={clip.videoId}
+              start={clip.start}
+              end={clip.end}
+              onClose={() => setPlaying(false)}
+            />
           ) : (
             <>
               <div className={"clipflow-lib-status " + clip.status}>
