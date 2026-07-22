@@ -34,17 +34,21 @@ function formatTime(seconds) {
   return `${m}:${String(r).padStart(2, "0")}`;
 }
 
-// Renders a YouTube clip that is force-confined to [start, end]. Unlike the
-// plain <iframe src="...?start=..&end=.."> approach, this uses the real
-// IFrame JS API and actively polls playback position, so the clip reliably
-// stops at `end` and never drifts into the rest of the source video —
-// URL-param `end` alone is known to be unreliable, especially with autoplay.
+// Renders a YouTube clip that is force-confined to [start, end], with its
+// own play/pause, seek bar, and end-of-clip replay state — all driven
+// through the real IFrame JS API rather than the plain iframe src params
+// (which are unreliable for `end`, and give no way to hide YouTube's own
+// controls/branding or add a custom scrubber).
 export default function ClipPlayer({ videoId, start, end, onClose }) {
   const mountRef = useRef(null);
   const playerRef = useRef(null);
   const pollRef = useRef(null);
+  const trackRef = useRef(null);
   const duration = Math.max(0, end - start);
+
   const [elapsed, setElapsed] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [ended, setEnded] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -75,25 +79,32 @@ export default function ClipPlayer({ videoId, start, end, onClose }) {
             e.target.playVideo();
           },
           onStateChange: (e) => {
-            clearInterval(pollRef.current);
-            if (e.data !== YT.PlayerState.PLAYING) return;
-
-            pollRef.current = setInterval(() => {
-              const player = playerRef.current;
-              if (!player || typeof player.getCurrentTime !== "function") return;
-              const t = player.getCurrentTime();
-              // If playback ever reaches/passes the clip end, or somehow
-              // drifts before the clip start, snap back and pause instead
-              // of letting the rest of the source video play.
-              if (t >= end || t < start - 1) {
-                player.pauseVideo();
-                player.seekTo(start, true);
-                setElapsed(0);
-                clearInterval(pollRef.current);
-                return;
-              }
-              setElapsed(Math.min(duration, Math.max(0, t - start)));
-            }, 200);
+            if (e.data === YT.PlayerState.PLAYING) {
+              setIsPlaying(true);
+              setEnded(false);
+              clearInterval(pollRef.current);
+              pollRef.current = setInterval(() => {
+                const player = playerRef.current;
+                if (!player || typeof player.getCurrentTime !== "function") return;
+                const t = player.getCurrentTime();
+                // Reached (or somehow drifted past) the clip end: stop
+                // instead of letting it roll into the rest of the source
+                // video or auto-loop, and surface a replay control.
+                if (t >= end || t < start - 1) {
+                  player.pauseVideo();
+                  player.seekTo(start, true);
+                  setElapsed(0);
+                  setIsPlaying(false);
+                  setEnded(true);
+                  clearInterval(pollRef.current);
+                  return;
+                }
+                setElapsed(Math.min(duration, Math.max(0, t - start)));
+              }, 200);
+            } else if (e.data === YT.PlayerState.PAUSED) {
+              setIsPlaying(false);
+              clearInterval(pollRef.current);
+            }
           },
         },
       });
@@ -110,19 +121,98 @@ export default function ClipPlayer({ videoId, start, end, onClose }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoId, start, end]);
 
+  function seekToFraction(fraction) {
+    const player = playerRef.current;
+    if (!player || typeof player.seekTo !== "function" || !duration) return;
+    const clamped = Math.min(1, Math.max(0, fraction));
+    player.seekTo(start + clamped * duration, true);
+    setElapsed(clamped * duration);
+    setEnded(false);
+    player.playVideo();
+  }
+
+  function handleBarClick(e) {
+    e.stopPropagation();
+    const track = trackRef.current;
+    if (!track) return;
+    const rect = track.getBoundingClientRect();
+    seekToFraction((e.clientX - rect.left) / rect.width);
+  }
+
+  function togglePlayPause(e) {
+    e.stopPropagation();
+    const player = playerRef.current;
+    if (!player) return;
+    if (ended) {
+      seekToFraction(0);
+    } else if (isPlaying) {
+      player.pauseVideo();
+    } else {
+      player.playVideo();
+    }
+  }
+
+  const progressPct = duration ? (elapsed / duration) * 100 : 0;
+
   return (
     <>
       <div className="clipflow-clip-player" style={{ overflow: "hidden" }}>
         <div ref={mountRef} style={{ width: "100%", height: "100%" }} />
       </div>
-      {/* Masks YouTube's own title/channel overlay (top) and logo/link
-          watermark (bottom-right) so this reads as a clip, not an embedded
-          video with branding on top of it. */}
+
+      {/* Intercepts all pointer interaction with the embed itself, so
+          YouTube's own hover-triggered overlays (title/channel bar, logo
+          tooltip, "watch on YouTube") never get a chance to appear — the
+          mouse never actually reaches the iframe. Also drives play/pause. */}
+      <div className="clipflow-clip-hit-layer" onClick={togglePlayPause} />
+
+      {/* Static masks for the moments (e.g. right on load) where YouTube
+          shows title/channel or its logo without a hover trigger. */}
       <div className="clipflow-clip-top-mask" />
       <div className="clipflow-clip-bottom-mask" />
+
+      {ended ? (
+        <button
+          className="clipflow-clip-replay"
+          onClick={(e) => {
+            e.stopPropagation();
+            seekToFraction(0);
+          }}
+          aria-label="Replay clip"
+        >
+          ↻
+        </button>
+      ) : (
+        !isPlaying && (
+          <button
+            className="clipflow-clip-resume"
+            onClick={(e) => {
+              e.stopPropagation();
+              playerRef.current?.playVideo();
+            }}
+            aria-label="Resume clip"
+          />
+        )
+      )}
+
+      <div
+        className="clipflow-clip-bar"
+        onClick={handleBarClick}
+        role="slider"
+        aria-label="Seek within clip"
+        aria-valuemin={0}
+        aria-valuemax={duration}
+        aria-valuenow={elapsed}
+      >
+        <div className="clipflow-clip-bar-track" ref={trackRef}>
+          <div className="clipflow-clip-bar-fill" style={{ width: `${progressPct}%` }} />
+        </div>
+      </div>
+
       <div className="clipflow-clip-timer">
         {formatTime(elapsed)} / {formatTime(duration)}
       </div>
+
       <button
         className="clipflow-clip-stop"
         onClick={(e) => {
