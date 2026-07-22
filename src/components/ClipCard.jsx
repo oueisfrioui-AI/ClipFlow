@@ -36,6 +36,7 @@ export default function ClipCard({ clip, onPost, onDelete, onSave, showSource })
               videoId={clip.videoId}
               start={clip.start}
               end={clip.end}
+              title={clip.title}
               onClose={() => setPlaying(false)}
             />
           ) : (

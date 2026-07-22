@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 // Loads the YouTube IFrame JS API once and shares the promise across every
 // player instance on the page, since YouTube only fires
@@ -34,12 +35,14 @@ function formatTime(seconds) {
   return `${m}:${String(r).padStart(2, "0")}`;
 }
 
-// Renders a YouTube clip that is force-confined to [start, end], with its
-// own play/pause, seek bar, and end-of-clip replay state — all driven
-// through the real IFrame JS API rather than the plain iframe src params
-// (which are unreliable for `end`, and give no way to hide YouTube's own
-// controls/branding or add a custom scrubber).
-export default function ClipPlayer({ videoId, start, end, onClose }) {
+// Renders a YouTube clip, confined to [start, end], as a popup modal (same
+// pattern as the Edit modal) rendered via a portal straight to <body> — so
+// it's never trapped inside a card's stacking context and always sits
+// centered above everything. Playback is driven entirely through the real
+// IFrame JS API rather than the plain iframe src params (which are
+// unreliable for `end`), giving us our own play/pause, a custom seek bar,
+// and an end-of-clip replay state instead of relying on YouTube's own UI.
+export default function ClipPlayer({ videoId, start, end, title, onClose }) {
   const mountRef = useRef(null);
   const playerRef = useRef(null);
   const pollRef = useRef(null);
@@ -110,8 +113,15 @@ export default function ClipPlayer({ videoId, start, end, onClose }) {
       });
     });
 
+    // Close on Escape, like the Edit modal.
+    function handleKey(e) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", handleKey);
+
     return () => {
       cancelled = true;
+      document.removeEventListener("keydown", handleKey);
       clearInterval(pollRef.current);
       if (playerRef.current && typeof playerRef.current.destroy === "function") {
         playerRef.current.destroy();
@@ -154,75 +164,81 @@ export default function ClipPlayer({ videoId, start, end, onClose }) {
 
   const progressPct = duration ? (elapsed / duration) * 100 : 0;
 
-  return (
+  return createPortal(
     <>
-      <div className="clipflow-clip-player" style={{ overflow: "hidden" }}>
-        <div ref={mountRef} style={{ width: "100%", height: "100%" }} />
-      </div>
+      <div className="clipflow-clip-modal-backdrop" onClick={onClose} />
+      <div className="clipflow-clip-modal" role="dialog" aria-modal="true" aria-label={title || "Clip preview"}>
+        <div className="clipflow-clip-player" style={{ overflow: "hidden" }}>
+          <div ref={mountRef} style={{ width: "100%", height: "100%" }} />
+        </div>
 
-      {/* Intercepts all pointer interaction with the embed itself, so
-          YouTube's own hover-triggered overlays (title/channel bar, logo
-          tooltip, "watch on YouTube") never get a chance to appear — the
-          mouse never actually reaches the iframe. Also drives play/pause. */}
-      <div className="clipflow-clip-hit-layer" onClick={togglePlayPause} />
+        {/* Intercepts all pointer interaction with the embed itself, so
+            YouTube's own hover-triggered overlays (title/channel bar, logo
+            tooltip, "watch on YouTube") never get a chance to appear — the
+            mouse never actually reaches the iframe. Also drives play/pause. */}
+        <div className="clipflow-clip-hit-layer" onClick={togglePlayPause} />
 
-      {/* Static masks for the moments (e.g. right on load) where YouTube
-          shows title/channel or its logo without a hover trigger. */}
-      <div className="clipflow-clip-top-mask" />
-      <div className="clipflow-clip-bottom-mask" />
+        {/* Static masks for the moments (e.g. right on load, or while
+            paused) where YouTube shows title/channel or its logo without a
+            hover trigger. The popup format gives extra room for these to
+            sit comfortably without covering the actual clip content. */}
+        <div className="clipflow-clip-top-mask" />
+        <div className="clipflow-clip-bottom-mask" />
 
-      {ended ? (
-        <button
-          className="clipflow-clip-replay"
-          onClick={(e) => {
-            e.stopPropagation();
-            seekToFraction(0);
-          }}
-          aria-label="Replay clip"
-        >
-          ↻
-        </button>
-      ) : (
-        !isPlaying && (
+        {ended ? (
           <button
-            className="clipflow-clip-resume"
+            className="clipflow-clip-replay"
             onClick={(e) => {
               e.stopPropagation();
-              playerRef.current?.playVideo();
+              seekToFraction(0);
             }}
-            aria-label="Resume clip"
-          />
-        )
-      )}
+            aria-label="Replay clip"
+          >
+            ↻
+          </button>
+        ) : (
+          !isPlaying && (
+            <button
+              className="clipflow-clip-resume"
+              onClick={(e) => {
+                e.stopPropagation();
+                playerRef.current?.playVideo();
+              }}
+              aria-label="Resume clip"
+            />
+          )
+        )}
 
-      <div
-        className="clipflow-clip-bar"
-        onClick={handleBarClick}
-        role="slider"
-        aria-label="Seek within clip"
-        aria-valuemin={0}
-        aria-valuemax={duration}
-        aria-valuenow={elapsed}
-      >
-        <div className="clipflow-clip-bar-track" ref={trackRef}>
-          <div className="clipflow-clip-bar-fill" style={{ width: `${progressPct}%` }} />
+        <div
+          className="clipflow-clip-bar"
+          onClick={handleBarClick}
+          role="slider"
+          aria-label="Seek within clip"
+          aria-valuemin={0}
+          aria-valuemax={duration}
+          aria-valuenow={elapsed}
+        >
+          <div className="clipflow-clip-bar-track" ref={trackRef}>
+            <div className="clipflow-clip-bar-fill" style={{ width: `${progressPct}%` }} />
+          </div>
         </div>
-      </div>
 
-      <div className="clipflow-clip-timer">
-        {formatTime(elapsed)} / {formatTime(duration)}
-      </div>
+        <div className="clipflow-clip-timer">
+          {formatTime(elapsed)} / {formatTime(duration)}
+        </div>
 
-      <button
-        className="clipflow-clip-stop"
-        onClick={(e) => {
-          e.stopPropagation();
-          onClose();
-        }}
-        aria-label="Stop preview"
-      >
-        ✕
-      </button>
-    </>
+        <button
+          className="clipflow-clip-stop"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+          aria-label="Close preview"
+        >
+          ✕
+        </button>
+      </div>
+    </>,
+    document.body
   );
 }

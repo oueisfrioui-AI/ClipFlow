@@ -50,6 +50,7 @@ export default function ReviewStage({ videoId, selectedClipIds, onToggleClip, on
                     videoId={videoId}
                     start={clip.start}
                     end={clip.end}
+                    title={clip.title}
                     onClose={() => setPlayingId(null)}
                   />
                 ) : (
