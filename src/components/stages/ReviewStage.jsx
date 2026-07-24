@@ -55,6 +55,12 @@ export default function ReviewStage({ videoId, selectedClipIds, onToggleClip, on
                   />
                 ) : (
                   <>
+                    <img
+                      className="clipflow-clip-thumb-img"
+                      src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
+                      alt=""
+                      loading="lazy"
+                    />
                     <button
                       className="clipflow-clip-play"
                       onClick={(e) => {

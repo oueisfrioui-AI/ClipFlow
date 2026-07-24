@@ -41,6 +41,12 @@ export default function ClipCard({ clip, onPost, onDelete, onSave, showSource })
             />
           ) : (
             <>
+              <img
+                className="clipflow-clip-thumb-img"
+                src={`https://img.youtube.com/vi/${clip.videoId}/hqdefault.jpg`}
+                alt=""
+                loading="lazy"
+              />
               <div className={"clipflow-lib-status " + clip.status}>
                 {clip.status === "published" ? "Published" : "Draft"}
               </div>
