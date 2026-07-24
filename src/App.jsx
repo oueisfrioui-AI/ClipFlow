@@ -228,6 +228,7 @@ export default function App() {
         {step === "review" && (
           <ReviewStage
             videoId={currentVideo?.videoId}
+            videoThumbnail={currentVideo?.thumbnail}
             selectedClipIds={selectedClipIds}
             onToggleClip={toggleClipSelection}
             onContinue={handleReviewContinue}

@@ -10,7 +10,7 @@ export const CLIPS = [
   { id: 5, duration: "0:29", title: "The reaction says it all", start: 799, end: 828 },
 ];
 
-export default function ReviewStage({ videoId, selectedClipIds, onToggleClip, onContinue }) {
+export default function ReviewStage({ videoId, videoThumbnail, selectedClipIds, onToggleClip, onContinue }) {
   const [playingId, setPlayingId] = useState(null);
   const count = selectedClipIds.length;
 
@@ -55,12 +55,17 @@ export default function ReviewStage({ videoId, selectedClipIds, onToggleClip, on
                   />
                 ) : (
                   <>
-                    <img
-                      className="clipflow-clip-thumb-img"
-                      src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
-                      alt=""
-                      loading="lazy"
-                    />
+                    {videoThumbnail && (
+                      <img
+                        className="clipflow-clip-thumb-img"
+                        src={videoThumbnail}
+                        alt=""
+                        loading="lazy"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                        }}
+                      />
+                    )}
                     <button
                       className="clipflow-clip-play"
                       onClick={(e) => {
