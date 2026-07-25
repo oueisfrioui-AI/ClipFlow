@@ -231,7 +231,6 @@ export default function App() {
             videoThumbnail={currentVideo?.thumbnail}
             selectedClipIds={selectedClipIds}
             onToggleClip={toggleClipSelection}
-            onSetSelectedClipIds={setSelectedClipIds}
             onContinue={handleReviewContinue}
           />
         )}
