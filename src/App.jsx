@@ -8,7 +8,7 @@ import ProcessingStage from "./components/stages/ProcessingStage.jsx";
 import ReviewStage, { CLIPS } from "./components/stages/ReviewStage.jsx";
 import PublishStage from "./components/stages/PublishStage.jsx";
 import DoneStage from "./components/stages/DoneStage.jsx";
-import { API_BASE } from "./lib/api.js";
+import { authFetch, getToken, setToken, clearToken } from "./lib/api.js";
 
 function makeClipId() {
   return `clip_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -28,14 +28,29 @@ export default function App() {
   const [library, setLibrary] = useState([]);
   const [checkingSession, setCheckingSession] = useState(true);
 
-  // On load (including landing back here after the Google OAuth redirect),
-  // ask the backend if there's already a logged-in session.
+  // On load: if we just landed back from the Google OAuth redirect, the
+  // backend puts the token in the URL hash (#token=...). Pull it out,
+  // save it, and scrub the hash so it's not left sitting in the address bar.
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (hash.startsWith("#token=")) {
+      const token = decodeURIComponent(hash.slice("#token=".length));
+      setToken(token);
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+  }, []);
+
+  // Ask the backend who we are, using whatever token we have stored
+  // (whether it just arrived above, or was already saved from a previous visit).
   useEffect(() => {
     async function checkSession() {
+      const token = getToken();
+      if (!token) {
+        setCheckingSession(false);
+        return;
+      }
       try {
-        const res = await fetch(`${API_BASE}/auth/me`, {
-          credentials: "include",
-        });
+        const res = await authFetch("/auth/me");
         if (res.ok) {
           const me = await res.json();
           setUser({
@@ -45,9 +60,13 @@ export default function App() {
             picture: me.picture_url,
           });
           setStep((s) => (s === "login" ? "import" : s));
+        } else {
+          // Token expired/invalid — clear it so we don't keep retrying it.
+          clearToken();
         }
       } catch (err) {
-        // Not logged in / backend unreachable — stay on the login screen.
+        // Backend unreachable — stay on the login screen, keep the token
+        // in case it's just a transient network issue.
       } finally {
         setCheckingSession(false);
       }
@@ -71,25 +90,14 @@ export default function App() {
     setActiveClipIds([]);
   }
 
-  async function logout() {
-    // Clear local session state immediately (don't wait on the network
-    // request) so there's no window where the UI still thinks a user is
-    // logged in.
+  function logout() {
     setSidebarOpen(false);
     setStep("login");
     setCurrentVideo(null);
     setSelectedClipIds([]);
     setActiveClipIds([]);
     setUser(null);
-
-    try {
-      await fetch(`${API_BASE}/auth/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
-    } catch (err) {
-      // Local session is already cleared above regardless of this outcome.
-    }
+    clearToken();
   }
 
   function openLibrary() {
