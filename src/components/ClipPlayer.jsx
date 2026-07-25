@@ -312,7 +312,7 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
             tooltip, "watch on YouTube") never get a chance to appear — the
             mouse never actually reaches the iframe. Also drives play/pause. */}
         <div
-        className="clipflow-clip-hit-layer"
+        className={"clipflow-clip-hit-layer" + (ended ? " ended" : "")}
         onClick={handleHitLayerClick}
       />
 

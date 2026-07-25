@@ -166,7 +166,8 @@ html, body{margin:0;padding:0;}
 }
 .clipflow-clip-top-mask{position:absolute;top:0;left:0;right:0;height:64px;background:linear-gradient(180deg,rgba(0,0,0,0.92),rgba(0,0,0,0));z-index:1;pointer-events:none;}
 .clipflow-clip-bottom-mask{position:absolute;bottom:0;right:0;width:96px;height:44px;background:linear-gradient(135deg,rgba(0,0,0,0) 0%,rgba(0,0,0,0.92) 45%);z-index:1;pointer-events:none;}
-.clipflow-clip-hit-layer{position:absolute;inset:0;z-index:1;cursor:pointer;}
+.clipflow-clip-hit-layer{position:absolute;inset:0;z-index:1;cursor:pointer;transition:background .15s ease;}
+.clipflow-clip-hit-layer.ended{background:rgba(10,8,5,0.82);}
 .clipflow-clip-native-repeat-glow{
   position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
   width:64px;height:64px;border-radius:50%;cursor:pointer;z-index:2;
