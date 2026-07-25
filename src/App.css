@@ -137,12 +137,6 @@ html, body{margin:0;padding:0;}
 .clipflow-timeline-marks{display:flex;justify-content:space-between;margin-top:10px;font-size:11px;color:var(--ink-faint);}
 
 .clipflow-review-hint{color:var(--ink-dim);font-size:13px;text-align:center;margin:0 0 18px;}
-.clipflow-hint-play-icon{
-  display:inline-flex;align-items:center;justify-content:center;
-  width:16px;height:16px;border-radius:50%;background:var(--orange);
-  vertical-align:-3px;margin:0 1px;
-}
-.clipflow-hint-play-icon::after{content:"";width:0;height:0;border-style:solid;border-width:4px 0 4px 6px;border-color:transparent transparent transparent #FFFFFF;margin-left:2px;}
 .clipflow-bulk-bar{display:flex;align-items:center;justify-content:space-between;max-width:640px;margin:0 auto 16px;padding:0 4px;}
 .clipflow-bulk-count{font-size:13px;font-weight:600;color:var(--ink-dim);}
 .clipflow-bulk-actions{display:flex;gap:8px;}
@@ -198,9 +192,11 @@ html, body{margin:0;padding:0;}
 .clipflow-clip-play:hover{transform:translate(-50%,-50%) scale(1.08);box-shadow:0 8px 22px rgba(255,90,46,0.55),0 0 0 8px rgba(255,90,46,0.2);}
 .clipflow-clip-play:active{transform:translate(-50%,-50%) scale(0.96);}
 .clipflow-clip-play::after{content:"";width:0;height:0;border-style:solid;border-width:8px 0 8px 13px;border-color:transparent transparent transparent #FFFFFF;margin-left:3px;}
-.clipflow-clip-frame{position:absolute;inset:0;overflow:hidden;}
+.clipflow-clip-frame{
+  position:absolute;top:50%;left:0;right:0;transform:translateY(-50%);
+  aspect-ratio:16/9;overflow:hidden;
+}
 .clipflow-clip-player{position:absolute;inset:0;width:100%;height:100%;border:none;}
-.clipflow-clip-player iframe{width:100%;height:100%;object-fit:cover;object-position:center;border:none;}
 .clipflow-clip-stop{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,0.6);color:#FFFFFF;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;z-index:2;}
 .clipflow-clip-stop:hover{background:rgba(0,0,0,0.8);}
 .clipflow-clip-check{position:absolute;top:10px;left:10px;width:22px;height:22px;border-radius:50%;background:var(--orange);color:#FFFFFF;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;}

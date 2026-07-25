@@ -73,12 +73,8 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
 
       playerRef.current = new YT.Player(mountEl, {
         videoId,
-        // A real fixed 16:9 size (not "100%") — this becomes the iframe's
-        // actual intrinsic dimensions, which is what lets the CSS below
-        // crop it to fill a vertical frame edge-to-edge (Shorts-style)
-        // instead of YouTube letterboxing it inside a portrait box.
-        width: 640,
-        height: 360,
+        width: "100%",
+        height: "100%",
         playerVars: {
           start,
           end,
