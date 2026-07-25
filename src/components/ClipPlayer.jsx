@@ -92,11 +92,14 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
                 const t = player.getCurrentTime();
                 // Reached (or somehow drifted past) the clip end: stop
                 // instead of letting it roll into the rest of the source
-                // video or auto-loop, and surface a replay control.
+                // video, and surface a replay control. Deliberately just
+                // pause here rather than also seeking back to `start` —
+                // calling seekTo() right after pauseVideo() can make
+                // YouTube silently resume playback, racing our own
+                // "ended" state and briefly showing both overlays.
                 if (t >= end || t < start - 1) {
                   player.pauseVideo();
-                  player.seekTo(start, true);
-                  setElapsed(0);
+                  setElapsed(duration);
                   setIsPlaying(false);
                   setEnded(true);
                   clearInterval(pollRef.current);
@@ -200,7 +203,7 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
             </svg>
           </button>
         ) : (
-          !isPlaying && (
+          !ended && !isPlaying && (
             <button
               className="clipflow-clip-resume"
               onClick={(e) => {
