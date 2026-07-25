@@ -329,7 +329,7 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
             the clip's actual `start` time. */}
         {ended && (
           <button
-            className="clipflow-clip-resume replay"
+            className="clipflow-clip-play replay"
             onClick={handleReplay}
             aria-label="Replay clip"
           >
