@@ -137,6 +137,7 @@ html, body{margin:0;padding:0;}
 .clipflow-timeline-marks{display:flex;justify-content:space-between;margin-top:10px;font-size:11px;color:var(--ink-faint);}
 
 .clipflow-review-hint{color:var(--ink-dim);font-size:13px;text-align:center;margin:0 0 18px;}
+.clipflow-hint-play{color:var(--orange);}
 .clipflow-bulk-bar{display:flex;align-items:center;justify-content:space-between;max-width:640px;margin:0 auto 16px;padding:0 4px;}
 .clipflow-bulk-count{font-size:13px;font-weight:600;color:var(--ink-dim);}
 .clipflow-bulk-actions{display:flex;gap:8px;}
