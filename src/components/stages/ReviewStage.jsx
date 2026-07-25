@@ -10,9 +10,25 @@ export const CLIPS = [
   { id: 5, duration: "0:29", title: "The reaction says it all", start: 799, end: 828 },
 ];
 
-export default function ReviewStage({ videoId, videoThumbnail, selectedClipIds, onToggleClip, onContinue }) {
+export default function ReviewStage({
+  videoId,
+  videoThumbnail,
+  selectedClipIds,
+  onToggleClip,
+  onSetSelectedClipIds,
+  onContinue,
+}) {
   const [playingId, setPlayingId] = useState(null);
   const count = selectedClipIds.length;
+  const allSelected = count === CLIPS.length;
+
+  function selectAll() {
+    onSetSelectedClipIds(CLIPS.map((c) => c.id));
+  }
+
+  function deselectAll() {
+    onSetSelectedClipIds([]);
+  }
 
   return (
     <div>
@@ -31,8 +47,31 @@ export default function ReviewStage({ videoId, videoThumbnail, selectedClipIds, 
       </div>
 
       <p className="clipflow-review-hint">
-        Tap ▶ to preview, tap the card to select — pick as many as you'd like.
+        Tap <span className="clipflow-hint-play-icon" aria-hidden="true" /> to preview, tap the
+        card to select — pick as many as you'd like.
       </p>
+
+      <div className="clipflow-bulk-bar">
+        <span className="clipflow-bulk-count">
+          {count} of {CLIPS.length} selected
+        </span>
+        <div className="clipflow-bulk-actions">
+          <button
+            className="clipflow-bulk-btn"
+            onClick={selectAll}
+            disabled={allSelected}
+          >
+            Select all
+          </button>
+          <button
+            className="clipflow-bulk-btn"
+            onClick={deselectAll}
+            disabled={count === 0}
+          >
+            Deselect all
+          </button>
+        </div>
+      </div>
 
       <div className="clipflow-clip-row">
         {CLIPS.map((clip) => {
