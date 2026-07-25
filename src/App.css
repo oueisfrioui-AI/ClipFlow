@@ -178,7 +178,6 @@ html, body{margin:0;padding:0;}
 .clipflow-clip-resume{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:52px;height:52px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;box-shadow:0 6px 18px rgba(255,90,46,0.45),0 0 0 6px rgba(255,90,46,0.16);z-index:2;transition:transform 0.15s ease;}
 .clipflow-clip-resume:hover{transform:translate(-50%,-50%) scale(1.08);}
 .clipflow-clip-resume::after{content:"";width:0;height:0;border-style:solid;border-width:9px 0 9px 14px;border-color:transparent transparent transparent #FFFFFF;margin-left:3px;}
-.clipflow-clip-play.replay::after{content:none;}
 .clipflow-clip-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:48px;height:48px;border-radius:50%;background:var(--orange);display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;box-shadow:0 6px 18px rgba(255,90,46,0.45),0 0 0 6px rgba(255,90,46,0.16);transition:transform 0.15s ease,box-shadow 0.15s ease;}
 .clipflow-clip-play:hover{transform:translate(-50%,-50%) scale(1.08);box-shadow:0 8px 22px rgba(255,90,46,0.55),0 0 0 8px rgba(255,90,46,0.2);}
 .clipflow-clip-play:active{transform:translate(-50%,-50%) scale(0.96);}
