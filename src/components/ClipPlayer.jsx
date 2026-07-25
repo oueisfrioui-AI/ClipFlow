@@ -121,6 +121,16 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
             } else if (e.data === YT.PlayerState.PAUSED) {
               setIsPlaying(false);
               clearInterval(pollRef.current);
+            } else if (e.data === YT.PlayerState.ENDED) {
+              // The `end` playerVar makes YouTube itself fire a native
+              // ENDED state once it hits that timestamp — independent of
+              // our own polling above, and it comes with YouTube's own
+              // centered replay icon/end-screen baked into the iframe.
+              // Treat it the same as our own end-of-clip handling.
+              setElapsed(duration);
+              setIsPlaying(false);
+              setEnded(true);
+              clearInterval(pollRef.current);
             }
           },
         },
@@ -199,6 +209,12 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
             sit comfortably without covering the actual clip content. */}
         <div className="clipflow-clip-top-mask" />
         <div className="clipflow-clip-bottom-mask" />
+
+        {/* Once ended, fully hide the video (and whatever YouTube renders
+            on top of it natively — its own replay icon, end screen, etc.)
+            rather than just masking corners, since our own replay button
+            takes over from here. */}
+        {ended && <div className="clipflow-clip-ended-cover" />}
 
         {ended ? (
           <button
