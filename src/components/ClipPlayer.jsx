@@ -52,6 +52,7 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
   const [elapsed, setElapsed] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [ended, setEnded] = useState(false);
+  const [muted, setMuted] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -72,8 +73,12 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
 
       playerRef.current = new YT.Player(mountEl, {
         videoId,
-        width: "100%",
-        height: "100%",
+        // A real fixed 16:9 size (not "100%") — this becomes the iframe's
+        // actual intrinsic dimensions, which is what lets the CSS below
+        // crop it to fill a vertical frame edge-to-edge (Shorts-style)
+        // instead of YouTube letterboxing it inside a portrait box.
+        width: 640,
+        height: 360,
         playerVars: {
           start,
           end,
@@ -91,6 +96,9 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
             // start/end get dropped on this load.
             e.target.seekTo(start, true);
             e.target.playVideo();
+            // Browsers sometimes force-mute autoplaying video regardless of
+            // what we asked for — reflect the real state in our own UI.
+            setMuted(e.target.isMuted());
           },
           onStateChange: (e) => {
             if (e.data === YT.PlayerState.PLAYING) {
@@ -137,9 +145,56 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
       });
     });
 
-    // Close on Escape, like the Edit modal.
+    // Keyboard shortcuts while the modal is open. Deliberately read live
+    // state off the player itself (getPlayerState/isMuted/getCurrentTime)
+    // rather than the React state variables above — this handler is only
+    // re-attached when the clip identity (videoId/start/end) changes, so
+    // closing over isPlaying/ended/muted directly would go stale the
+    // moment any of those changed without the effect re-running.
     function handleKey(e) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        onClose();
+        return;
+      }
+
+      const player = playerRef.current;
+      if (!player || typeof player.getPlayerState !== "function") return;
+
+      switch (e.key) {
+        case " ":
+        case "Spacebar": {
+          e.preventDefault();
+          const state = player.getPlayerState();
+          if (state === window.YT?.PlayerState.PLAYING) {
+            player.pauseVideo();
+          } else {
+            player.playVideo();
+          }
+          break;
+        }
+        case "ArrowLeft":
+          e.preventDefault();
+          nudgeSeconds(-5);
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          nudgeSeconds(5);
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          adjustVolume(10);
+          break;
+        case "ArrowDown":
+          e.preventDefault();
+          adjustVolume(-10);
+          break;
+        case "m":
+        case "M":
+          toggleMute();
+          break;
+        default:
+          break;
+      }
     }
     document.addEventListener("keydown", handleKey);
 
@@ -164,6 +219,43 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
     setElapsed(clamped * duration);
     setEnded(false);
     player.playVideo();
+  }
+
+  // Nudges playback by `delta` seconds, clamped within the clip's own
+  // [start, end] window — used by the ←/→ keyboard shortcuts.
+  function nudgeSeconds(delta) {
+    const player = playerRef.current;
+    if (!player || typeof player.getCurrentTime !== "function") return;
+    const target = Math.min(end, Math.max(start, player.getCurrentTime() + delta));
+    player.seekTo(target, true);
+    setElapsed(Math.min(duration, Math.max(0, target - start)));
+    setEnded(false);
+    if (player.getPlayerState() !== window.YT?.PlayerState.PLAYING) {
+      player.playVideo();
+    }
+  }
+
+  function adjustVolume(delta) {
+    const player = playerRef.current;
+    if (!player || typeof player.getVolume !== "function") return;
+    const next = Math.min(100, Math.max(0, player.getVolume() + delta));
+    player.setVolume(next);
+    if (next > 0 && player.isMuted()) {
+      player.unMute();
+      setMuted(false);
+    }
+  }
+
+  function toggleMute() {
+    const player = playerRef.current;
+    if (!player) return;
+    if (player.isMuted()) {
+      player.unMute();
+      setMuted(false);
+    } else {
+      player.mute();
+      setMuted(true);
+    }
   }
 
   function handleBarClick(e) {
@@ -191,60 +283,87 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
     <>
       <div className="clipflow-clip-modal-backdrop" onClick={onClose} />
       <div className="clipflow-clip-modal" role="dialog" aria-modal="true" aria-label={title || "Clip preview"}>
-        <div className="clipflow-clip-player" style={{ overflow: "hidden" }}>
-          <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
-        </div>
+        <div className="clipflow-clip-frame">
+          <div className="clipflow-clip-player" style={{ overflow: "hidden" }}>
+            <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
+          </div>
 
-        {/* Intercepts all pointer interaction with the embed itself, so
-            YouTube's own hover-triggered overlays (title/channel bar, logo
-            tooltip, "watch on YouTube") never get a chance to appear — the
-            mouse never actually reaches the iframe. Also drives play/pause. */}
-        <div
-        className="clipflow-clip-hit-layer"
-        onClick={togglePlayPause}
-        style={{ pointerEvents: ended ? "none" : "auto" }}
-      />
+          {/* Intercepts all pointer interaction with the embed itself, so
+              YouTube's own hover-triggered overlays (title/channel bar, logo
+              tooltip, "watch on YouTube") never get a chance to appear — the
+              mouse never actually reaches the iframe. Also drives play/pause. */}
+          <div
+            className="clipflow-clip-hit-layer"
+            onClick={togglePlayPause}
+            style={{ pointerEvents: ended ? "none" : "auto" }}
+          />
 
-        {/* Static masks for the moments (e.g. right on load, or while
-            paused) where YouTube shows title/channel or its logo without a
-            hover trigger. The popup format gives extra room for these to
-            sit comfortably without covering the actual clip content. */}
-        <div className="clipflow-clip-top-mask" />
-        <div className="clipflow-clip-bottom-mask" />
+          {/* Static masks for the moments (e.g. right on load, or while
+              paused) where YouTube shows title/channel or its logo without a
+              hover trigger. Anchored to this frame — which is sized to the
+              video's actual 16:9 content area — rather than the outer 9:16
+              modal, so they land exactly where that branding renders instead
+              of over empty letterbox space. */}
+          <div className="clipflow-clip-top-mask" />
+          <div className="clipflow-clip-bottom-mask" />
 
-        {/* Purely decorative — sits behind YouTube's own native
-            replay icon (which appears automatically once `ended` fires)
-            and dresses it up with a glow, without blocking clicks to it. */}
-        {ended && <div className="clipflow-clip-native-repeat-glow" />}
+          {/* Purely decorative — sits behind YouTube's own native
+              replay icon (which appears automatically once `ended` fires)
+              and dresses it up with a glow, without blocking clicks to it. */}
+          {ended && <div className="clipflow-clip-native-repeat-glow" />}
 
-        {!ended && !isPlaying && (
+          {!ended && !isPlaying && (
+            <button
+              className="clipflow-clip-resume"
+              onClick={(e) => {
+                e.stopPropagation();
+                playerRef.current?.playVideo();
+              }}
+              aria-label="Resume clip"
+            />
+          )}
+
+          <div
+            className="clipflow-clip-bar"
+            onClick={handleBarClick}
+            role="slider"
+            aria-label="Seek within clip"
+            aria-valuemin={0}
+            aria-valuemax={duration}
+            aria-valuenow={elapsed}
+          >
+            <div className="clipflow-clip-bar-track" ref={trackRef}>
+              <div className="clipflow-clip-bar-fill" style={{ width: `${progressPct}%` }} />
+              <div className="clipflow-clip-bar-thumb" style={{ left: `${progressPct}%` }} />
+            </div>
+          </div>
+
+          <div className="clipflow-clip-timer">
+            {formatTime(elapsed)} / {formatTime(duration)}
+          </div>
+
           <button
-            className="clipflow-clip-resume"
+            className="clipflow-clip-mute"
             onClick={(e) => {
               e.stopPropagation();
-              playerRef.current?.playVideo();
+              toggleMute();
             }}
-            aria-label="Resume clip"
-          />
-        )}
-
-        <div
-          className="clipflow-clip-bar"
-          onClick={handleBarClick}
-          role="slider"
-          aria-label="Seek within clip"
-          aria-valuemin={0}
-          aria-valuemax={duration}
-          aria-valuenow={elapsed}
-        >
-          <div className="clipflow-clip-bar-track" ref={trackRef}>
-            <div className="clipflow-clip-bar-fill" style={{ width: `${progressPct}%` }} />
-            <div className="clipflow-clip-bar-thumb" style={{ left: `${progressPct}%` }} />
-          </div>
-        </div>
-
-        <div className="clipflow-clip-timer">
-          {formatTime(elapsed)} / {formatTime(duration)}
+            aria-label={muted ? "Unmute" : "Mute"}
+          >
+            {muted ? (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="3 9 3 15 8 15 13 20 13 4 8 9 3 9" fill="currentColor" stroke="none" />
+                <line x1="16" y1="9" x2="22" y2="15" />
+                <line x1="22" y1="9" x2="16" y2="15" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="3 9 3 15 8 15 13 20 13 4 8 9 3 9" fill="currentColor" stroke="none" />
+                <path d="M16 8a5 5 0 0 1 0 8" />
+                <path d="M19 5a9 9 0 0 1 0 14" />
+              </svg>
+            )}
+          </button>
         </div>
 
         <button
