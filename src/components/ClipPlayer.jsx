@@ -332,6 +332,7 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
             className="clipflow-clip-play"
             onClick={handleReplay}
             aria-label="Replay clip"
+            style={{ background: "#FF5A2E" }}
           />
         )}
 
