@@ -47,7 +47,8 @@ export default function ReviewStage({
       </div>
 
       <p className="clipflow-review-hint">
-        Tap ▶ to preview, tap the card to select — pick as many as you'd like.
+        Tap <span className="clipflow-hint-play-icon" aria-hidden="true" /> to preview, tap the
+        card to select — pick as many as you'd like.
       </p>
 
       <div className="clipflow-bulk-bar">
