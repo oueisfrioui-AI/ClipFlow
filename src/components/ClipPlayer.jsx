@@ -178,9 +178,7 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
     e.stopPropagation();
     const player = playerRef.current;
     if (!player) return;
-    if (ended) {
-      seekToFraction(0);
-    } else if (isPlaying) {
+    if (isPlaying) {
       player.pauseVideo();
     } else {
       player.playVideo();
@@ -201,7 +199,11 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
             YouTube's own hover-triggered overlays (title/channel bar, logo
             tooltip, "watch on YouTube") never get a chance to appear — the
             mouse never actually reaches the iframe. Also drives play/pause. */}
-        <div className="clipflow-clip-hit-layer" onClick={togglePlayPause} />
+        <div
+        className="clipflow-clip-hit-layer"
+        onClick={togglePlayPause}
+        style={{ pointerEvents: ended ? "none" : "auto" }}
+      />
 
         {/* Static masks for the moments (e.g. right on load, or while
             paused) where YouTube shows title/channel or its logo without a
@@ -210,37 +212,20 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
         <div className="clipflow-clip-top-mask" />
         <div className="clipflow-clip-bottom-mask" />
 
-        {/* Once ended, fully hide the video (and whatever YouTube renders
-            on top of it natively — its own replay icon, end screen, etc.)
-            rather than just masking corners, since our own replay button
-            takes over from here. */}
-        {ended && <div className="clipflow-clip-ended-cover" />}
+        {/* Purely decorative — sits behind YouTube's own native
+            replay icon (which appears automatically once `ended` fires)
+            and dresses it up with a glow, without blocking clicks to it. */}
+        {ended && <div className="clipflow-clip-native-repeat-glow" />}
 
-        {ended ? (
+        {!ended && !isPlaying && (
           <button
-            className="clipflow-clip-replay"
+            className="clipflow-clip-resume"
             onClick={(e) => {
               e.stopPropagation();
-              seekToFraction(0);
+              playerRef.current?.playVideo();
             }}
-            aria-label="Replay clip"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 12a9 9 0 1 0 3-6.7" />
-              <polyline points="3 4 3 9 8 9" />
-            </svg>
-          </button>
-        ) : (
-          !ended && !isPlaying && (
-            <button
-              className="clipflow-clip-resume"
-              onClick={(e) => {
-                e.stopPropagation();
-                playerRef.current?.playVideo();
-              }}
-              aria-label="Resume clip"
-            />
-          )
+            aria-label="Resume clip"
+          />
         )}
 
         <div
