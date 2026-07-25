@@ -43,7 +43,7 @@ function formatTime(seconds) {
 // unreliable for `end`), giving us our own play/pause, a custom seek bar,
 // and an end-of-clip replay state instead of relying on YouTube's own UI.
 export default function ClipPlayer({ videoId, start, end, title, onClose }) {
-  const mountRef = useRef(null);
+  const containerRef = useRef(null);
   const playerRef = useRef(null);
   const pollRef = useRef(null);
   const trackRef = useRef(null);
@@ -56,10 +56,21 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
   useEffect(() => {
     let cancelled = false;
 
-    loadYouTubeAPI().then((YT) => {
-      if (cancelled || !mountRef.current) return;
+    // The YouTube API takes ownership of whatever element it's given and
+    // replaces it with its own <iframe>. Handing it a disposable element we
+    // create here (instead of the React-managed ref directly) means React
+    // Strict Mode's dev-only double-invoke of this effect can never hand a
+    // second player instance a stale/already-mutated node — each run gets
+    // its own throwaway mount point, cleanly removed on cleanup.
+    const mountEl = document.createElement("div");
+    mountEl.style.width = "100%";
+    mountEl.style.height = "100%";
+    containerRef.current?.appendChild(mountEl);
 
-      playerRef.current = new YT.Player(mountRef.current, {
+    loadYouTubeAPI().then((YT) => {
+      if (cancelled) return;
+
+      playerRef.current = new YT.Player(mountEl, {
         videoId,
         width: "100%",
         height: "100%",
@@ -130,6 +141,7 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
         playerRef.current.destroy();
       }
       playerRef.current = null;
+      mountEl.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoId, start, end]);
@@ -172,7 +184,7 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
       <div className="clipflow-clip-modal-backdrop" onClick={onClose} />
       <div className="clipflow-clip-modal" role="dialog" aria-modal="true" aria-label={title || "Clip preview"}>
         <div className="clipflow-clip-player" style={{ overflow: "hidden" }}>
-          <div ref={mountRef} style={{ width: "100%", height: "100%" }} />
+          <div ref={containerRef} style={{ width: "100%", height: "100%" }} />
         </div>
 
         {/* Intercepts all pointer interaction with the embed itself, so
