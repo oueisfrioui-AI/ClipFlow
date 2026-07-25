@@ -112,7 +112,7 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
                 // calling seekTo() right after pauseVideo() can make
                 // YouTube silently resume playback, racing our own
                 // "ended" state and briefly showing both overlays.
-                if (t >= end || t < start - 1) {
+                if (t >= end) {
                   player.pauseVideo();
                   setElapsed(duration);
                   setIsPlaying(false);
@@ -273,6 +273,30 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
     }
   }
 
+  // Explicitly restarts the clip at `start`, rather than relying on
+  // YouTube's own native end-of-video replay icon — which, in testing,
+  // doesn't reliably honor the start/end clip window on restart (it can
+  // resume from wherever the clip paused, or jump to the very beginning of
+  // the source video). Driving the seek ourselves guarantees the clip
+  // always loops back to the right place.
+  function handleReplay(e) {
+    e.stopPropagation();
+    const player = playerRef.current;
+    if (!player || typeof player.seekTo !== "function") return;
+    setEnded(false);
+    setElapsed(0);
+    player.seekTo(start, true);
+    player.playVideo();
+  }
+
+  function handleHitLayerClick(e) {
+    if (ended) {
+      handleReplay(e);
+    } else {
+      togglePlayPause(e);
+    }
+  }
+
   const progressPct = duration ? (elapsed / duration) * 100 : 0;
 
   return createPortal(
@@ -289,8 +313,7 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
             mouse never actually reaches the iframe. Also drives play/pause. */}
         <div
         className="clipflow-clip-hit-layer"
-        onClick={togglePlayPause}
-        style={{ pointerEvents: ended ? "none" : "auto" }}
+        onClick={handleHitLayerClick}
       />
 
         {/* Static masks for the moments (e.g. right on load, or while
@@ -300,10 +323,22 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
         <div className="clipflow-clip-top-mask" />
         <div className="clipflow-clip-bottom-mask" />
 
-        {/* Purely decorative — sits behind YouTube's own native
-            replay icon (which appears automatically once `ended` fires)
-            and dresses it up with a glow, without blocking clicks to it. */}
-        {ended && <div className="clipflow-clip-native-repeat-glow" />}
+        {/* Our own replay control — sits where YouTube's native (unreliable)
+            end-screen replay icon would be, but is a real button we drive
+            ourselves via handleReplay, so restarting always lands back at
+            the clip's actual `start` time. */}
+        {ended && (
+          <button
+            className="clipflow-clip-native-repeat-glow"
+            onClick={handleReplay}
+            aria-label="Replay clip"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+            </svg>
+          </button>
+        )}
 
         {!ended && !isPlaying && (
           <button
