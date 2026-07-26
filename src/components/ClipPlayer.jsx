@@ -52,7 +52,7 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
   const [elapsed, setElapsed] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [ended, setEnded] = useState(false);
-  const [muted, setMuted] = useState(false);
+  const [muted, setMuted] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,6 +79,7 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
           start,
           end,
           autoplay: 1,
+          mute: 1,
           controls: 0,
           disablekb: 1,
           rel: 0,
@@ -91,10 +92,15 @@ export default function ClipPlayer({ videoId, start, end, title, onClose }) {
             // Belt-and-suspenders: force the clip window even if playerVars
             // start/end get dropped on this load.
             e.target.seekTo(start, true);
+            // Mobile browsers (iOS Safari, mobile Chrome) block autoplay of
+            // unmuted video unless play() runs synchronously inside the
+            // original tap's event handler — this onReady callback fires
+            // async after the IFrame API loads, so it no longer counts as
+            // that gesture. Muting first is what makes autoplay actually
+            // work on phones; the mute button lets the user opt into sound.
+            e.target.mute();
             e.target.playVideo();
-            // Browsers sometimes force-mute autoplaying video regardless of
-            // what we asked for — reflect the real state in our own UI.
-            setMuted(e.target.isMuted());
+            setMuted(true);
           },
           onStateChange: (e) => {
             if (e.data === YT.PlayerState.PLAYING) {
