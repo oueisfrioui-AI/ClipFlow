@@ -5,10 +5,40 @@ import MyLibraryPage from "./components/MyLibraryPage.jsx";
 import LoginStage from "./components/stages/LoginStage.jsx";
 import ImportStage from "./components/stages/ImportStage.jsx";
 import ProcessingStage from "./components/stages/ProcessingStage.jsx";
-import ReviewStage, { CLIPS } from "./components/stages/ReviewStage.jsx";
+import ReviewStage from "./components/stages/ReviewStage.jsx";
 import PublishStage from "./components/stages/PublishStage.jsx";
 import DoneStage from "./components/stages/DoneStage.jsx";
-import { authFetch, getToken, setToken, clearToken } from "./lib/api.js";
+import { authFetch, getToken, setToken, clearToken, createJob } from "./lib/api.js";
+
+// "01:23" or "1:02:15" -> seconds. Mirrors the parser in ReviewStage.jsx —
+// small enough that a shared util felt like overkill for now, but worth
+// factoring out if a third spot needs it.
+function parseTimestamp(ts) {
+  if (typeof ts === "number") return ts;
+  if (typeof ts !== "string") return 0;
+  const parts = ts.split(":").map((p) => parseInt(p, 10));
+  if (parts.some((p) => Number.isNaN(p))) return 0;
+  return parts.reduce((acc, p) => acc * 60 + p, 0);
+}
+
+function formatDuration(totalSeconds) {
+  const s = Math.max(0, Math.round(totalSeconds));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${String(r).padStart(2, "0")}`;
+}
+
+// Placeholder clips, used only while the backend's render_clips step is
+// still a stub timer with no real output. Remove once real results flow
+// through — see the TODO note on handleProcessingDone below.
+const MOCK_CLIPS = [
+  { duration: "0:38", title: "The moment the routine actually clicked", start: 42, end: 80 },
+  { duration: "0:24", title: "\u201cI almost quit on day 9\u201d", start: 187, end: 211 },
+  { duration: "0:51", title: "Before and after, side by side", start: 336, end: 387 },
+  { duration: "0:19", title: "The one line that stuck with me", start: 512, end: 531 },
+  { duration: "0:44", title: "Why nobody tells you this part", start: 641, end: 685 },
+  { duration: "0:29", title: "The reaction says it all", start: 799, end: 828 },
+];
 
 function makeClipId() {
   return `clip_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -23,6 +53,9 @@ export default function App() {
   );
 
   const [currentVideo, setCurrentVideo] = useState(null);
+  const [jobId, setJobId] = useState(null);
+  const [generatedClips, setGeneratedClips] = useState([]);
+  const [processingError, setProcessingError] = useState(null);
   const [selectedClipIds, setSelectedClipIds] = useState([]);
   const [activeClipIds, setActiveClipIds] = useState([]);
   const [library, setLibrary] = useState([]);
@@ -86,6 +119,9 @@ export default function App() {
   function startOver() {
     setStep("import");
     setCurrentVideo(null);
+    setJobId(null);
+    setGeneratedClips([]);
+    setProcessingError(null);
     setSelectedClipIds([]);
     setActiveClipIds([]);
   }
@@ -94,6 +130,9 @@ export default function App() {
     setSidebarOpen(false);
     setStep("login");
     setCurrentVideo(null);
+    setJobId(null);
+    setGeneratedClips([]);
+    setProcessingError(null);
     setSelectedClipIds([]);
     setActiveClipIds([]);
     setUser(null);
@@ -111,11 +150,56 @@ export default function App() {
     );
   }
 
+  // Kicks off the real backend pipeline for a submitted video. Transitions
+  // to "processing" immediately so the UI doesn't sit frozen on the button
+  // click; ProcessingStage itself handles jobId still being null for the
+  // brief moment before createJob() resolves.
+  async function handleImportSubmit(info) {
+    setCurrentVideo(info);
+    setProcessingError(null);
+    setJobId(null);
+    setStep("processing");
+    try {
+      const { job_id } = await createJob(info.sourceUrl);
+      setJobId(job_id);
+    } catch (err) {
+      setProcessingError("Couldn't start processing that video. Please try again.");
+      setStep("import");
+    }
+  }
+
+  // The backend is currently just a stub timer (per-step ~10s delay) while
+  // the real pipeline logic isn't implemented yet — this is deliberately
+  // for validating the job lifecycle wiring (auth -> create -> poll -> SSE)
+  // ahead of the actual work. So there's no real `result.clips` payload
+  // yet; fall back to mock clips so Review/Publish/Library can still be
+  // exercised end-to-end. Once the backend returns real results, this same
+  // `jobSnapshot?.result?.clips ?? jobSnapshot?.clips` lookup should just
+  // start finding real data — confirm the exact field name/shape at that
+  // point and this fallback can come out.
+  function handleProcessingDone(jobSnapshot) {
+    const rawClips = jobSnapshot?.result?.clips ?? jobSnapshot?.clips ?? MOCK_CLIPS;
+    const clips = rawClips.map((c, i) => ({
+      id: `${jobSnapshot.job_id || jobId}_${i}`,
+      ...c,
+    }));
+    setGeneratedClips(clips);
+    setSelectedClipIds([]);
+    setStep("review");
+  }
+
+  function handleProcessingError(message) {
+    setProcessingError(message);
+    setStep("import");
+  }
+
   // Turns the selected candidate clips into real library entries tied to
   // the current video, then hands them to the Publish stage.
   function handleReviewContinue() {
-    const newEntries = selectedClipIds.map((clipTemplateId) => {
-      const template = CLIPS.find((c) => c.id === clipTemplateId);
+    const newEntries = selectedClipIds.map((clipId) => {
+      const template = generatedClips.find((c) => c.id === clipId);
+      const startSeconds = parseTimestamp(template.start);
+      const endSeconds = parseTimestamp(template.end);
       return {
         id: makeClipId(),
         videoId: currentVideo.videoId,
@@ -125,9 +209,19 @@ export default function App() {
         title: template.title,
         description:
           "Full video linked below. Cut with ClipFlow from " + currentVideo.title + ".",
-        duration: template.duration,
-        start: template.start,
-        end: template.end,
+        duration:
+          typeof template.duration === "number"
+            ? formatDuration(template.duration)
+            : formatDuration(endSeconds - startSeconds),
+        start: startSeconds,
+        end: endSeconds,
+        // Carried over from the analysis step in case Publish/Library ever
+        // want to surface them (score badge, hook as a subtitle, etc.).
+        score: template.score,
+        reason: template.reason,
+        hook: template.hook,
+        category: template.category,
+        viralPotential: template.viral_potential,
         thumbnailIndex: 0,
         isShort: true,
         status: "draft",
@@ -221,22 +315,36 @@ export default function App() {
         {step === "login" && <LoginStage />}
 
         {step === "import" && (
-          <ImportStage
-            onSubmit={(info) => {
-              setCurrentVideo(info);
-              setStep("processing");
-            }}
-          />
+          <>
+            {processingError && (
+              <p
+                style={{
+                  color: "var(--orange)",
+                  fontSize: 13,
+                  textAlign: "center",
+                  marginTop: 8,
+                }}
+              >
+                {processingError}
+              </p>
+            )}
+            <ImportStage onSubmit={handleImportSubmit} />
+          </>
         )}
 
         {step === "processing" && (
-          <ProcessingStage onDone={() => setStep("review")} />
+          <ProcessingStage
+            jobId={jobId}
+            onDone={handleProcessingDone}
+            onError={handleProcessingError}
+          />
         )}
 
         {step === "review" && (
           <ReviewStage
             videoId={currentVideo?.videoId}
             videoThumbnail={currentVideo?.thumbnail}
+            clips={generatedClips}
             selectedClipIds={selectedClipIds}
             onToggleClip={toggleClipSelection}
             onSetSelectedClipIds={setSelectedClipIds}

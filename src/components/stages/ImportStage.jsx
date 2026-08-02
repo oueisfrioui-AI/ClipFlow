@@ -68,14 +68,14 @@ export default function ImportStage({ onSubmit }) {
     }
 
     const timeoutId = setTimeout(() => {
-      fetchVideo(videoId);
+      fetchVideo(videoId, trimmed);
     }, 400);
 
     return () => clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url]);
 
-  async function fetchVideo(videoId) {
+  async function fetchVideo(videoId, sourceUrl) {
     setError(null);
     setVideoInfo(null);
     setLoading(true);
@@ -90,6 +90,7 @@ export default function ImportStage({ onSubmit }) {
 
       setVideoInfo({
         videoId,
+        sourceUrl,
         title: video.snippet.title,
         channel: video.snippet.channelTitle,
         thumbnail: video.snippet.thumbnails.medium.url,

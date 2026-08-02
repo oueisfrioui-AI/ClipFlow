@@ -1,18 +1,29 @@
 import { useState } from "react";
 import ClipPlayer from "../ClipPlayer.jsx";
 
-export const CLIPS = [
-  { id: 0, duration: "0:38", title: "The moment the routine actually clicked", start: 42, end: 80 },
-  { id: 1, duration: "0:24", title: "\u201cI almost quit on day 9\u201d", start: 187, end: 211 },
-  { id: 2, duration: "0:51", title: "Before and after, side by side", start: 336, end: 387 },
-  { id: 3, duration: "0:19", title: "The one line that stuck with me", start: 512, end: 531 },
-  { id: 4, duration: "0:44", title: "Why nobody tells you this part", start: 641, end: 685 },
-  { id: 5, duration: "0:29", title: "The reaction says it all", start: 799, end: 828 },
-];
+// Converts a backend "mm:ss" or "h:mm:ss" timestamp string into seconds,
+// for the player (which seeks numerically). Falls back to 0 on anything
+// unparseable rather than throwing, since this drives a UI, not logic.
+function parseTimestamp(ts) {
+  if (typeof ts === "number") return ts;
+  if (typeof ts !== "string") return 0;
+  const parts = ts.split(":").map((p) => parseInt(p, 10));
+  if (parts.some((p) => Number.isNaN(p))) return 0;
+  return parts.reduce((acc, p) => acc * 60 + p, 0);
+}
+
+// "92" (seconds) -> "1:32", for the duration badge on each card.
+function formatDuration(totalSeconds) {
+  const s = Math.max(0, Math.round(totalSeconds));
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}:${String(r).padStart(2, "0")}`;
+}
 
 export default function ReviewStage({
   videoId,
   videoThumbnail,
+  clips,
   selectedClipIds,
   onToggleClip,
   onSetSelectedClipIds,
@@ -20,10 +31,10 @@ export default function ReviewStage({
 }) {
   const [playingId, setPlayingId] = useState(null);
   const count = selectedClipIds.length;
-  const allSelected = count === CLIPS.length;
+  const allSelected = clips.length > 0 && count === clips.length;
 
   function selectAll() {
-    onSetSelectedClipIds(CLIPS.map((c) => c.id));
+    onSetSelectedClipIds(clips.map((c) => c.id));
   }
 
   function deselectAll() {
@@ -53,7 +64,7 @@ export default function ReviewStage({
 
       <div className="clipflow-bulk-bar">
         <span className="clipflow-bulk-count">
-          {count} of {CLIPS.length} selected
+          {count} of {clips.length} selected
         </span>
         <div className="clipflow-bulk-actions">
           <button
@@ -74,9 +85,16 @@ export default function ReviewStage({
       </div>
 
       <div className="clipflow-clip-row">
-        {CLIPS.map((clip) => {
+        {clips.map((clip) => {
           const selected = selectedClipIds.includes(clip.id);
           const playing = playingId === clip.id;
+          const startSeconds = parseTimestamp(clip.start);
+          const endSeconds = parseTimestamp(clip.end);
+          const durationLabel =
+            typeof clip.duration === "number"
+              ? formatDuration(clip.duration)
+              : clip.duration || formatDuration(endSeconds - startSeconds);
+
           return (
             <div
               className={"clipflow-clip-card" + (selected ? " selected" : "")}
@@ -87,8 +105,8 @@ export default function ReviewStage({
                 {playing ? (
                   <ClipPlayer
                     videoId={videoId}
-                    start={clip.start}
-                    end={clip.end}
+                    start={startSeconds}
+                    end={endSeconds}
                     title={clip.title}
                     onClose={() => setPlayingId(null)}
                   />
@@ -113,7 +131,7 @@ export default function ReviewStage({
                       }}
                       aria-label="Preview clip"
                     />
-                    <div className="clipflow-clip-duration">{clip.duration}</div>
+                    <div className="clipflow-clip-duration">{durationLabel}</div>
                     {selected && <div className="clipflow-clip-check">✓</div>}
                   </>
                 )}
