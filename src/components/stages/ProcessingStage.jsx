@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { getJobStatus, streamJobUpdates } from "../../lib/api.js";
 
 const STEPS = [
-  { key: "fetch_video", label: "Fetching video" },
   { key: "transcribe", label: "Transcribing audio" },
   { key: "score_moments", label: "Scoring moments for attention" },
   { key: "render_clips", label: "Rendering clips" },
